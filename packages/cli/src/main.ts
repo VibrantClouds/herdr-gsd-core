@@ -24,7 +24,7 @@ function usage(): string {
   notify test                  send a test notification through gsdd
   event                        handle a Herdr plugin event (HERDR_PLUGIN_EVENT_JSON)
   adapter install|uninstall|doctor <claude-code|codex|opencode> [--global|--local <dir>]
-  config init                  write a commented default config.toml if missing
+  config init|path|show        create the commented default config.toml if missing / print its path / show the effective config
   orchestrate plan|phase|isolated|autonomous [--root <dir>] [--command "<gsd cmd>"] [--phase N] [--from N] [--to N] [--dry-run]
   orchestrate stop [--run <id>|--all] [--discard]     stop the run(s) of the current workspace/project
   orchestrate list|status [--root <dir>]              runs (status also shows a notification)
@@ -170,18 +170,8 @@ async function main(argv: string[]): Promise<number> {
         return await cmdAdapter(ctx, sub, rest);
       case 'orchestrate':
         return await cmdOrchestrate(ctx, sub, rest);
-      case 'config': {
-        const file = path.join(env.configDir, 'config.toml');
-        if (fs.existsSync(file)) {
-          out(ctx, `config exists: ${file}`, { file, created: false });
-          return 0;
-        }
-        const { DEFAULT_CONFIG_TOML } = await import('@herdr-gsd/core');
-        fs.mkdirSync(env.configDir, { recursive: true });
-        fs.writeFileSync(file, DEFAULT_CONFIG_TOML);
-        out(ctx, `wrote ${file}`, { file, created: true });
-        return 0;
-      }
+      case 'config':
+        return await cmdConfig(ctx, sub);
       case 'version':
       case '--version':
         out(ctx, DAEMON_VERSION, { version: DAEMON_VERSION });
@@ -194,6 +184,40 @@ async function main(argv: string[]): Promise<number> {
     const msg = e instanceof ControlError ? `${e.code}: ${e.message}` : (e as Error).message;
     process.stderr.write(`herdr-gsd: ${msg}\n`);
     return 1;
+  }
+}
+
+/**
+ * `config init|path|show`. The daemon writes the commented default file on its first
+ * start; `init` does the same on demand (never overwrites), `path` prints where it is,
+ * `show` prints the effective config with any warnings. `init` and `path` also raise a
+ * Herdr notification so the manifest action `config` can be used from the action palette.
+ */
+async function cmdConfig(ctx: Ctx, sub: string | undefined): Promise<number> {
+  const file = path.join(ctx.env.configDir, 'config.toml');
+  const { DEFAULT_CONFIG_TOML, loadConfig } = await import('@herdr-gsd/core');
+  switch (sub ?? 'init') {
+    case 'init':
+    case 'path': {
+      let created = false;
+      if (!fs.existsSync(file)) {
+        fs.mkdirSync(ctx.env.configDir, { recursive: true });
+        fs.writeFileSync(file, DEFAULT_CONFIG_TOML, { flag: 'wx' });
+        created = true;
+      }
+      out(ctx, `${created ? 'wrote' : 'config'}: ${file}\nedit it, then run the "GSD: restart daemon" action (or: herdr-gsd daemon restart)`, { file, created });
+      if (!ctx.json) notifyError(ctx, created ? 'GSD plugin: config.toml created' : 'GSD plugin: config.toml', `${file} — edit, then "GSD: restart daemon"`);
+      return 0;
+    }
+    case 'show': {
+      const loaded = await loadConfig(file);
+      const text = [`file: ${file}${loaded.missing ? ' (missing: defaults in effect; run config init)' : ''}`, ...loaded.warnings.map((w) => `warning: ${w}`), JSON.stringify(loaded.config, null, 2)].join('\n');
+      out(ctx, text, { file, missing: loaded.missing, warnings: loaded.warnings, config: loaded.config });
+      return loaded.warnings.length ? 1 : 0;
+    }
+    default:
+      process.stderr.write(usage() + '\n');
+      return 2;
   }
 }
 

@@ -33,6 +33,12 @@ contexts = ["workspace"]
 command = ["node", "packages/cli/dist/main.js", "notify", "test"]
 
 [[actions]]
+id = "config"
+title = "GSD: show config file (creates it if missing)"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "config", "path"]
+
+[[actions]]
 id = "daemon-restart"
 title = "GSD: restart daemon"
 contexts = ["workspace"]

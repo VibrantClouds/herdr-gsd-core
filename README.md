@@ -1,8 +1,11 @@
 # herdr-gsd-core
 
-A [Herdr](https://herdr.dev) plugin that observes [GSD-Core](https://github.com/opengsd/gsd-core) projects and projects their state into Herdr: sidebar tokens on every workspace that has a `.planning/`, pane tokens on the pane driving the GSD session, one notification per phase boundary, a dashboard pane, and (opt-in) supervised runs that start a harness in its own pane or worktree and send it GSD's own next command.
+A [Herdr](https://herdr.dev) plugin for [GSD-Core](https://github.com/opengsd/gsd-core) projects. It reads each project's `.planning/` and shows where the project is, right in Herdr: phase and status tokens in the sidebar, a notification when a phase changes or GSD is waiting for you, a dashboard pane, and (opt-in) supervised runs that start your coding agent in its own pane or worktree and hand it GSD's next command.
 
-**Observability first, orchestration second.** The plugin never takes lifecycle authority over a pane (it only ever calls `pane.report_metadata` / `workspace.report_metadata`; Herdr's own detection says whether an agent is working, blocked or idle), never writes under `.planning/`, and never modifies GSD's own hooks.
+<!-- screenshot: Herdr sidebar with $gsd_phase $gsd_status tokens on two workspaces, and the dashboard pane open -->
+![Herdr sidebar showing GSD phase tokens and the dashboard pane](docs/images/overview.png)
+
+The plugin only reports. It never takes lifecycle authority over a pane (it uses `pane.report_metadata` and `workspace.report_metadata` only; Herdr's own detection decides whether an agent is working, blocked or idle), never writes under `.planning/`, and never touches GSD's own hooks.
 
 ## Install
 
@@ -10,130 +13,159 @@ A [Herdr](https://herdr.dev) plugin that observes [GSD-Core](https://github.com/
 herdr plugin install VibrantClouds/herdr-gsd-core --yes
 ```
 
-Requirements: Herdr ≥ 0.9.0, Node ≥ 22, Linux or macOS. GSD-Core is optional at runtime: everything in the observer works from the `.planning/` filesystem alone. When `gsd-tools` is found (project-local `.claude/gsd-core/bin/gsd-tools.cjs`, `node_modules`, a config root such as `$CLAUDE_CONFIG_DIR`/`~/.claude`/`~/.claude-gsd`, or `PATH`) it is used for enrichment only, and only through read-only subcommands.
+Requirements: Herdr 0.9.0 or newer, Node 22 or newer, Linux or macOS. GSD-Core itself is optional at runtime; when `gsd-tools` is found it is used for extra detail, read-only.
 
-Local development:
+## Quick start
 
-```bash
-npm ci && npm run build
-herdr plugin link . --enabled
-herdr plugin log list --plugin herdr-gsd-core
-```
+1. Install, then open or restart Herdr. Every workspace whose repository has a `.planning/` shows `$gsd_phase $gsd_step $gsd_status $gsd_next` in the sidebar within a couple of seconds. Nothing needs configuring for this.
+2. Run the action **GSD: show config file** from Herdr's action palette. It creates `config.toml` if it does not exist yet and shows its path in a notification (normally `~/.config/herdr/plugins/config/herdr-gsd-core/config.toml`).
+3. Edit the file. To turn on supervised runs, set `enabled = true` under `[orchestration]`. If GSD is installed in a separate Claude config root, add its path under `[harness.claude-code.env]` (see Orchestration).
+4. Run the action **GSD: restart daemon**. The daemon reads the file only when it starts.
+5. Optional: open the dashboard pane and install a harness adapter for tool-level activity on the pane (both below).
 
-## What you get
+## What you see
 
-Workspace tokens (render as `$gsd_phase` etc. in sidebar rows, see Herdr's `ui.sidebar` config):
+**Sidebar tokens** on every workspace bound to a GSD project. Add them to your sidebar row format in Herdr's `config.toml` (`ui.sidebar`), for example `$gsd_phase · $gsd_status`.
 
-| token | example | source |
+| token | example | meaning |
 |---|---|---|
-| `gsd_phase` | `03 auth` | STATE.md current position / `.planning/state.json` |
-| `gsd_step` | `execute 2/4` | step + plan index |
-| `gsd_status` | `executing` · `blocked` · `paused` · `complete` | derived; `blocked` also when STATE.md carries `## Needs Human` or `## Deferred Verification` |
-| `gsd_next` | `verify-work 3` | GSD's own `smart-entry` recommendation, falling back to a rule table |
-| `gsd_err` | `gsd-tools missing` | only when something is wrong |
+| `gsd_phase` | `03 auth` | current phase |
+| `gsd_step` | `execute 2/4` | current step, plan index of total |
+| `gsd_status` | `executing`, `verifying`, `blocked`, `paused`, `complete` | `blocked` also when STATE.md has `## Needs Human`, `## Deferred Verification` or blockers |
+| `gsd_next` | `verify-work 3` | GSD's own recommended next command |
+| `gsd_err` | `STATE.md locked` | only when something is wrong |
 
-Pane tokens on the driver pane (need a harness adapter, TTL 90 s):
+**Pane tokens** on the pane that runs the GSD session, when a harness adapter is installed: `gsd_agent` (the subagent working now), `gsd_workers` (how many), `gsd_tool` (last tool call, redacted, 15 s), `gsd_ctx` (context use, Claude Code only).
 
-| token | example | source |
-|---|---|---|
-| `gsd_agent` | `executor` | open subagent span |
-| `gsd_workers` | `2 active` | count of open spans |
-| `gsd_tool` | `Bash git diff` | last tool call, TTL 15 s, redacted |
-| `gsd_ctx` | `62%` | GSD statusline bridge file (Claude Code only) |
+<!-- screenshot: a pane row showing $gsd_agent executor · $gsd_tool Bash pnpm test -->
+![Pane tokens showing the active subagent and tool](docs/images/pane-tokens.png)
 
-Notifications: one per coalesced change set (phase boundary, UAT appeared, paused, drift), per-category toggles in `config.toml`, suppressed when the pane is focused, retried once on Herdr rate limiting.
+**Notifications** for a phase change, a new UAT file, a pause, and when the driver agent is waiting for you. Each category can be switched off in `[notify]`; notifications are suppressed while that pane is focused.
 
-Dashboard: `herdr plugin pane open --plugin herdr-gsd-core --entrypoint dashboard` (or bind a key to it). `[enter]` on the recommended next command sends `/gsd-<next>` to the driver pane after a y/N confirmation and refuses when the driver agent is blocked. `o` / `w` / `a` start a supervised run (below) after a y/N line that states exactly what will happen, `x` stops the project's active run.
+**Dashboard pane**: `herdr plugin pane open --plugin herdr-gsd-core --entrypoint dashboard`, or bind it to a key.
 
-## Orchestration
+<!-- screenshot: the dashboard pane at 80x24 with phases, plans, next, runs and activity rows -->
+![Dashboard pane](docs/images/dashboard.png)
 
-Off by default. Turn it on with `[orchestration] enabled = true` in `config.toml`. Every run is planned first, and a plan that would fight GSD is refused with a sentence instead of started. What it does and does not do was decided by reading GSD-Core's own workflows and by live-testing every Herdr method involved (`docs/spikes/M4-orchestration.md`).
-
-Units:
-
-| action | what happens |
+| key | action |
 |---|---|
-| `orchestrate-phase` | splits a pane next to the project's pane, starts the configured harness there, waits until it is idle, sends GSD's recommended next command (`$gsd_next`), and follows the run through Herdr's own agent states |
-| `orchestrate-phase-isolated` | same, but first `worktree.create` on the branch GSD itself would use (`git.phase_branch_template` when `git.branching_strategy = "phase"`, else `<prefix>phase-NN-slug`), so GSD finds itself already on its phase branch; the main checkout stays untouched and you merge when done |
-| `orchestrate-autonomous` | a supervised pane running `/gsd-autonomous [--from N] [--to M]`; the run reports `blocked`, notices `## Needs Human`, and (only with `resume_on_exit = true`) re-launches a *dead* session with GSD's own `--from` resume hint, within a budget |
-| `orchestrate-stop` | interrupts the harness, then removes the worktree (kept and reported if it has uncommitted changes) or closes the pane the plugin created; nothing the plugin did not create is touched |
-| `orchestrate-status` | notification + JSON listing of active runs |
+| `enter` | send `/gsd-<next>` to the driver pane, after y/N; refused while the agent is blocked |
+| `o` | start a supervised run of the next command in a new pane, after y/N |
+| `w` | same, in a new worktree on the phase branch |
+| `a` | start a supervised `/gsd-autonomous` |
+| `x` | stop the project's active run, after y/N |
+| `tab` | next project · `r` rescan · `n` test notification · `q` quit |
 
-The same commands exist on the CLI (`node packages/cli/dist/main.js orchestrate phase|isolated|autonomous|stop|list|status`, `--dry-run` to only plan) and in the dashboard.
+## Configuration
 
-Refused on purpose, because GSD's model does not support them: parallel phases of one roadmap (STATE.md has a single Current Position and `/gsd-progress --next` re-routes to the lowest incomplete phase), wave-level runs (waves are sequential by GSD's own gate), pane-per-plan (no such command), and `/gsd-workspace` as isolation (it creates a new, unrelated project).
+One file: `config.toml` in the directory `herdr plugin config-dir herdr-gsd-core` prints. The **GSD: show config file** action creates it with every key present and commented; **GSD: restart daemon** applies changes. `config show` on the CLI prints the effective configuration and warns about unknown keys or bad values.
 
-Project states the planner respects before anything starts, and again before each prompt: project health (locked, parse error, no planning), `## Needs Human` / `## Deferred Verification` / non-empty blockers in STATE.md, paused projects (only `/gsd-resume-work` is offered), a completed roadmap, another active run on the same repository (one per repository, always), a harness session that is already working or blocked in the project's pane, and for isolation: `.planning/STATE.md` must be tracked by git (`commit_docs`), `git.branching_strategy` must not be `milestone`, and the branch must not collide with GSD's reserved executor-worktree names. `workflow.use_worktrees`, `parallelization`, `mode` and `workflow.auto_advance` only annotate the run with warnings.
-
-The harness inherits the shell environment of the pane it starts in. If GSD is installed in a separate Claude config root (for example `~/.claude-gsd`), a plain `claude` will not know the `/gsd-*` commands, so give the run that root: `[harness.claude-code.env] CLAUDE_CONFIG_DIR = "/home/me/.claude-gsd"`. That table is applied to the pane a non-isolated run splits; Herdr's `worktree.create` has no env parameter, so worktree panes inherit the shell environment only (the run carries a warning when env is configured).
-
-Claude Code's folder-trust dialog appears the first time it starts in a new worktree path; Herdr reports it as `blocked`, the run waits and notifies you, and continues when you answer. Trust is inherited from a trusted ancestor directory, so opening Claude Code once in `~/.herdr/worktrees` and accepting is a one-time fix; the plugin never edits `~/.claude.json`.
-
-`config.toml`:
+Minimal file to turn on supervised runs:
 
 ```toml
 [orchestration]
-enabled = false                  # off by default
-harness = "claude-code"          # which [harness.*] table to start ([harness.claude-code] command = ["claude"])
-worktree_branch_prefix = "gsd/"  # used when the project's git.branching_strategy is "none"
-max_parallel = 3                 # across different repositories; one repository never runs more than one
-isolation = "worktree"           # worktree|none
-start_timeout_ms = 60000         # harness must reach idle within this, else the run waits for you
-split_direction = "right"        # right|down for non-isolated runs
+enabled = true
 
-[orchestration.autonomous]
-resume_on_exit = false           # re-launch a dead /gsd-autonomous session with GSD's own resume command
-max_resumes = 3
-max_wall_clock_min = 480
+[harness.claude-code.env]
+CLAUDE_CONFIG_DIR = "/home/me/.claude-gsd"   # only if GSD lives in a separate Claude config root
 ```
 
-Run records live under the plugin state dir (`orchestration/<run-id>.json`) and survive daemon restarts: the daemon re-attaches to the pane by id and picks the state machine up from Herdr's current agent status.
+All keys, with defaults:
+
+| table | key | default | meaning |
+|---|---|---|---|
+| `[notify]` | `phase_boundary`, `blocked`, `uat_ready`, `drift` | `true`, `true`, `true`, `false` | per-category switches |
+| | `quiet_when_focused` | `true` | no notification for the focused pane |
+| | `sound` | `"done"` | `none`, `done` or `request` |
+| `[views]` | `enabled` | `false` | apply a "gsd" agent view (replaces your current view) |
+| `[harness.<name>]` | `command` | `["claude"]` | executable Herdr starts for runs; must be a kind Herdr can detect (`claude`, `codex`, `opencode`, `kilo`, `pi`, …) |
+| `[harness.<name>.env]` | any | none | environment for the pane a run splits (not applied to worktree panes) |
+| `[orchestration]` | `enabled` | `false` | supervised runs on or off |
+| | `harness` | `"claude-code"` | which `[harness.*]` table to use |
+| | `isolation` | `"worktree"` | `worktree` or `none` |
+| | `worktree_branch_prefix` | `"gsd/"` | branch prefix when the project's `git.branching_strategy` is `none` |
+| | `max_parallel` | `3` | active runs across different repositories; one repository never runs more than one |
+| | `start_timeout_ms` | `60000` | how long the harness may take to reach a prompt before the run waits for you |
+| | `split_direction` | `"right"` | `right` or `down` |
+| `[orchestration.autonomous]` | `resume_on_exit` | `false` | re-launch a dead `/gsd-autonomous` session with GSD's own resume command |
+| | `max_resumes`, `max_wall_clock_min` | `3`, `480` | budget for that |
+| `[projects]` | `autodiscover` | `true` | bind workspaces whose repo contains `.planning/` |
+| `[log]` | `level` | `"info"` | `debug`, `info`, `warn`, `error` |
+
+## Orchestration
+
+Off by default. A run is planned first; if it would fight GSD or the project is not in a state to run, it is refused with a plain-language reason and nothing is started.
+
+| action | what happens |
+|---|---|
+| **GSD: run next step in a new pane** (`orchestrate-phase`) | splits a pane next to the project's pane, starts the harness, waits until it is at its prompt, sends GSD's recommended next command, and follows the run through Herdr's agent states |
+| **GSD: run current phase in a worktree** (`orchestrate-phase-isolated`) | same, but first creates a worktree on the branch GSD itself would use (your `git.phase_branch_template` when `git.branching_strategy = "phase"`, else `gsd/phase-NN-slug`); your main checkout stays untouched and you merge when done |
+| **GSD: start supervised /gsd-autonomous** (`orchestrate-autonomous`) | a supervised pane running `/gsd-autonomous`; you are notified when it is blocked or when STATE.md says a human is needed; with `resume_on_exit = true` a session that died is re-launched with GSD's own `--from` hint |
+| **GSD: stop this workspace's run** (`orchestrate-stop`) | interrupts the harness, then removes the worktree (kept and reported if it has uncommitted changes) or closes the pane the plugin created |
+| **GSD: orchestration status** (`orchestrate-status`) | notification and listing of active runs |
+
+<!-- screenshot: a run in progress — the split pane with Claude Code working, the dashboard Runs row showing "running /gsd-execute-phase 3 → w1:p2" -->
+![A supervised run in progress](docs/images/orchestration-run.png)
+
+A run reports `waiting` and notifies you when the agent asks a question, when it has not reacted to the prompt, or when STATE.md gains `## Needs Human`. It ends `done` when the harness settles after working. Records survive daemon restarts.
+
+The planner refuses when: the project is locked, unparsable or has no phases; STATE.md has `## Needs Human`, `## Deferred Verification` or blockers; the project is paused (only `/gsd-resume-work` is offered); every phase is complete; another run is active on the same repository; a harness session is already working or blocked in the project's pane. Worktree runs additionally need `.planning/` tracked by git (`commit_docs`) and a `git.branching_strategy` other than `milestone`. Not offered at all: parallel phases of one roadmap, wave-level runs, pane-per-plan, and `/gsd-workspace` as isolation; GSD's model does not support them.
+
+Two practical notes:
+
+- The harness inherits the environment of the pane it starts in. If GSD is installed in a separate Claude config root, a plain `claude` will not know `/gsd-*`; set `[harness.claude-code.env] CLAUDE_CONFIG_DIR`. That applies to split panes only, because Herdr's worktree creation has no environment parameter.
+- Claude Code asks whether to trust a folder the first time it starts in a new worktree path. The run reports `waiting`, notifies you, and continues once you answer. Trust is inherited from a trusted parent directory, so accepting once in `~/.herdr/worktrees` covers future worktrees. The plugin never edits `~/.claude.json`.
 
 ## Harness adapters (optional)
 
-Adapters add hook entries to the harness so tool/subagent activity shows on the pane. They are additive and marker-free: the plugin owns exactly the entries whose command points at its own hook script, and `uninstall` removes exactly those, leaving the file otherwise byte-identical.
+Adapters add hook entries to the harness so subagent and tool activity shows on the pane. They only add entries whose command points at the plugin's own hook script, and `uninstall` removes exactly those.
 
 ```bash
 herdr-gsd adapter install claude-code            # $CLAUDE_CONFIG_DIR or ~/.claude/settings.json
-herdr-gsd adapter install claude-code --local .  # <project>/.claude/settings.json (project-local GSD)
+herdr-gsd adapter install claude-code --local .  # <project>/.claude/settings.json for a project-local GSD
 herdr-gsd adapter install codex                  # ~/.codex/hooks.json
 herdr-gsd adapter install opencode               # ~/.config/opencode/plugins/herdr-gsd-core.js
 herdr-gsd adapter doctor claude-code
 herdr-gsd adapter uninstall claude-code
 ```
 
-`herdr-gsd` is `node <plugin-root>/packages/cli/dist/main.js`; from a linked checkout use `node packages/cli/dist/main.js …`.
-
 ### Degradation matrix
 
-| harness | subagent spans | tool activity | context % | orchestration | notes |
-|---|---|---|---|---|---|
-| Claude Code | exact (`SubagentStart`/`SubagentStop`) | yes | yes (statusline bridge) | yes (`kind = claude`) | reference; folder-trust dialog handled as `blocked` |
-| Codex | start-only + 15 min TTL | post only | no | yes (`kind = codex`) | hook schema beyond `SessionStart` unverified against a real install |
-| OpenCode / Kilo | via plugin event bus | yes | no | yes (`kind = opencode` / `kilo`) | |
-| pi / others | none | none | no | yes if Herdr can start the kind | filesystem-only; all observer features still work |
+| harness | subagent spans | tool activity | context % | orchestration |
+|---|---|---|---|---|
+| Claude Code | exact | yes | yes | yes |
+| Codex | start only, 15 min TTL | after each tool | no | yes (hooks beyond `SessionStart` unverified on a real install) |
+| OpenCode / Kilo | via plugin event bus | yes | no | yes |
+| pi / others | none | none | no | if Herdr can start the kind |
 
-Orchestration needs Herdr to be able to start and detect the harness (`agent.start` kinds: `claude`, `codex`, `opencode`, `kilo`, `pi`, …); the planner refuses any `[harness.*] command` whose executable is not one of them.
+Everything in "What you see" except pane tokens works with no adapter at all.
 
-## Configuration
+## CLI
 
-`herdr plugin config-dir herdr-gsd-core` prints the config directory; `herdr-gsd config init` writes a commented `config.toml` with every default (notification toggles, agent view, harness commands, orchestration).
+`herdr-gsd` is `node <plugin-root>/packages/cli/dist/main.js`; `herdr plugin list` prints the plugin root. Add `--json` for machine output.
 
-## Design notes
+| command | purpose |
+|---|---|
+| `status` | daemon, projects, bindings, active runs |
+| `config init` / `config path` / `config show` | create the config file if missing / print its path / print the effective config with warnings |
+| `daemon ensure|restart|stop|status` | daemon control |
+| `project list|rescan` | bound projects |
+| `orchestrate plan --root <dir> [--unit phase-isolated] [--command "<gsd cmd>"]` | plan only; prints the reasons a run would be refused |
+| `orchestrate phase|isolated|autonomous [--root <dir>] [--command …] [--phase N] [--from N --to N] [--dry-run]` | start a run |
+| `orchestrate stop [--run <id>] [--discard]` / `list` / `status` | manage runs; `--discard` removes a dirty worktree |
+| `adapter install|uninstall|doctor <claude-code|codex|opencode> [--local <dir>]` | harness adapters |
 
-- One long-lived daemon (`gsdd`) per Herdr server socket, spawned by the plugin's `[[startup]]` hook and re-ensured by every action. Herdr does not supervise plugins, so the daemon supervises itself: pidfile + control-socket ping, stale pidfile restart, crash-loop guard (3 exits in 60 s → `gsdd.disabled` + one notification).
-- The filesystem is primary; hooks are enrichment. `.planning/state.json` (GSD's published contract) is read first, `STATE.md`/`ROADMAP.md`/phase directories are the fallback, parsed with the same rules GSD uses.
-- All Herdr metadata carries `source = "plugin:herdr-gsd-core"` and a wall-clock-floored `seq`, so a restarted daemon never has its reports silently dropped.
-- Orchestration is event-driven: after one bounded `agent.wait` at start-up, runs follow the `pane.updated` status diffs the daemon already receives, so a daemon restart loses nothing.
-- Verified facts about Herdr 0.9.0 and GSD-Core 1.14.0 live in `docs/spikes/`, the resulting decisions in `docs/DECISIONS.md`, the tested version matrix in `docs/COMPAT.md`, and the spec deltas in `spec.md` §13.
+## Troubleshooting
 
-## Testing
+- **No tokens on a workspace.** The repository needs `.planning/STATE.md` or `PROJECT.md`. Run **GSD: status**, or `herdr plugin log list --plugin herdr-gsd-core` for the daemon's start-up log.
+- **`gsd_err` shows `STATE.md locked`.** GSD is writing; tokens keep their previous values and recover when the lock goes away.
+- **The daemon stopped restarting.** After three crashes in a minute it writes `gsdd.disabled` in the plugin state dir with the last error; **GSD: restart daemon** clears it.
+- **A run was refused.** `orchestrate plan --root <project>` prints every reason.
+- **A worktree stayed on disk after stopping a run.** It had uncommitted changes; `orchestrate stop --run <id> --discard` removes it, or clean it up with `git worktree remove`.
 
-`npm test` runs every unit and fake-Herdr test; `npm run verify` runs the milestone gates M0–M5. The M5 gate runs `scripts/e2e-herdr.cjs` against a real `herdr` server in a throwaway `--session` when the binary is on `PATH` (CI installs the pinned one); `E2E_RUN=1` additionally starts a real harness run. See `docs/TESTING.md`.
+## Development
 
-## Non-goals (v1)
-
-No pane per GSD subagent, no streaming of subagent output, no writes to `.planning/`, no parallel phases of one roadmap, no Windows, no cross-machine federation, no replacement of Herdr's own agent detection.
+`npm ci && npm run build`, then `herdr plugin link . --enabled`. `npm test` runs the unit and fake-Herdr tests; `npm run verify` runs the milestone gates, including an end-to-end run against a real `herdr` server in a throwaway session. Design decisions, the tested version matrix and the live findings the design rests on are in `docs/` (`DECISIONS.md`, `COMPAT.md`, `TESTING.md`, `spikes/`).
 
 ## License
 
