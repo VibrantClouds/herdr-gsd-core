@@ -855,12 +855,19 @@ export class Daemon {
   private canonicalRoot(root: string): string {
     const resolved = path.resolve(root);
     if (this.projects.has(resolved)) return resolved;
-    try {
-      const real = fs.realpathSync(resolved);
-      return real;
-    } catch {
-      return resolved;
-    }
+    const realOf = (p: string): string => {
+      try {
+        return fs.realpathSync(p);
+      } catch {
+        return p;
+      }
+    };
+    const real = realOf(resolved);
+    if (this.projects.has(real)) return real;
+    // stored keys are whatever path Herdr (or a test) reported, which may itself be a symlink spelling
+    for (const key of this.projects.keys()) if (realOf(key) === real) return key;
+    // no bound project matches: keep the caller's spelling (a manual bind stores what the user gave)
+    return resolved;
   }
 
   private registerControl(): void {
