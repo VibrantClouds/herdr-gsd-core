@@ -59,10 +59,12 @@ test('fs.watch mode: debounced batch with filenames, ignores lock files', async 
   assert.ok(all.includes('STATE.md'), JSON.stringify(batches));
   assert.ok(!all.some((f) => f.endsWith('.lock')), JSON.stringify(batches));
   assert.ok(all.some((f) => f.endsWith('01-01-PLAN.md') || f.includes('phases')), JSON.stringify(batches));
+  // poke() forces a batch; on macOS late FSEvents for the writes above may ride along in it,
+  // so only its existence and the lock filter are asserted (Linux delivers []).
   const n = batches.length;
   w.poke();
   await waitFor(() => batches[n]);
-  assert.deepEqual(batches[n], []);
+  assert.ok(!batches[n]!.some((f) => f.endsWith('.lock')), JSON.stringify(batches[n]));
   w.stop();
   assert.equal(w.mode, 'stopped');
   w.stop();
