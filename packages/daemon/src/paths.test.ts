@@ -49,13 +49,13 @@ test('pluginEnv uses Herdr env when present, XDG fallbacks otherwise', () => {
   });
   const f = pluginEnv({}, '/home/u');
   assert.equal(f.pluginId, 'herdr-gsd-core');
-  assert.equal(f.configDir, '/home/u/.config/herdr-gsd-core');
-  assert.equal(f.stateDir, '/home/u/.local/state/herdr-gsd-core');
+  assert.equal(f.configDir, '/home/u/.config/herdr/plugins/config/herdr-gsd-core');
+  assert.equal(f.stateDir, '/home/u/.local/state/herdr/plugins/herdr-gsd-core');
   assert.equal(f.herdrSocket, '/home/u/.config/herdr/herdr.sock');
   assert.equal(f.herdrBin, 'herdr');
   assert.ok(path.isAbsolute(f.pluginRoot));
   const g = pluginEnv({ XDG_STATE_HOME: '/xs', XDG_CONFIG_HOME: '/xc' }, '/home/u');
-  assert.equal(g.stateDir, '/xs/herdr-gsd-core');
-  assert.equal(g.configDir, '/xc/herdr-gsd-core');
+  assert.equal(g.stateDir, '/xs/herdr/plugins/herdr-gsd-core');
+  assert.equal(g.configDir, '/xc/herdr/plugins/config/herdr-gsd-core');
   assert.equal(g.herdrSocket, '/xc/herdr/herdr.sock');
 });

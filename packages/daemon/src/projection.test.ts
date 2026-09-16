@@ -22,6 +22,8 @@ test('workspace tokens: full position', () => {
   });
   assert.deepEqual(workspaceTokens(s, 'execute-phase 3'), {
     gsd_phase: '03 auth flow',
+    gsd_phase_num: '03',
+    gsd_phase_name: 'auth flow',
     gsd_step: 'execute 2/4 w1',
     gsd_status: 'executing',
     gsd_next: 'execute-phase 3',
@@ -33,6 +35,8 @@ test('workspace tokens: full position', () => {
 test('workspace tokens: no planning → all cleared except err', () => {
   assert.deepEqual(workspaceTokens(snap({ health: 'no_planning' }), 'x', 'gsd-tools missing'), {
     gsd_phase: null,
+    gsd_phase_num: null,
+    gsd_phase_name: null,
     gsd_step: null,
     gsd_status: null,
     gsd_next: null,
@@ -96,6 +100,7 @@ test('pane tokens and delta', () => {
 
 test('shortSlug and title without phase', () => {
   assert.equal(shortSlug('auth-flow_and-more'), 'auth flow and more');
-  assert.equal(shortSlug('a'.repeat(40)).length, 24);
+  assert.equal(shortSlug('a'.repeat(80)).length, 60);
+  assert.equal(shortSlug('a'.repeat(40), 24).length, 24);
   assert.equal(paneTitle(snap()), 'GSD · project');
 });

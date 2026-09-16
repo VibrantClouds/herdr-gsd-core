@@ -6,7 +6,12 @@ import type { ActivityView } from './activity';
  * Token values are clamped to 80 chars by the client; keep them short here.
  */
 export type WorkspaceTokens = {
+  /** `03 auth` — number and name together */
   gsd_phase: string | null;
+  /** `03` — for narrow sidebar rows */
+  gsd_phase_num: string | null;
+  /** `auth` — the name alone, meant for a row of its own */
+  gsd_phase_name: string | null;
   gsd_step: string | null;
   gsd_status: string | null;
   gsd_next: string | null;
@@ -19,7 +24,7 @@ export type PaneTokens = {
   gsd_ctx: string | null;
 };
 
-export function shortSlug(slug: string, max = 24): string {
+export function shortSlug(slug: string, max = 60): string {
   const s = slug.replace(/[-_]+/g, ' ').trim();
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
 }
@@ -71,10 +76,12 @@ export function healthError(snap: ProjectSnapshot): string | null {
 
 export function workspaceTokens(snap: ProjectSnapshot, next: string | undefined, extraErr?: string): WorkspaceTokens {
   if (snap.health === 'no_planning') {
-    return { gsd_phase: null, gsd_step: null, gsd_status: null, gsd_next: null, gsd_err: extraErr ?? null };
+    return { gsd_phase: null, gsd_phase_num: null, gsd_phase_name: null, gsd_step: null, gsd_status: null, gsd_next: null, gsd_err: extraErr ?? null };
   }
   const pos = snap.position;
   const phase = pos?.phase ? `${pos.phase.number} ${shortSlug(pos.phase.slug)}`.trim() : snap.phases.length ? '—' : 'none';
+  const phaseNum = pos?.phase ? pos.phase.number : null;
+  const phaseName = pos?.phase ? shortSlug(pos.phase.slug) || null : null;
   let step: string | null = null;
   if (pos?.step) {
     step = pos.step;
@@ -86,6 +93,8 @@ export function workspaceTokens(snap: ProjectSnapshot, next: string | undefined,
   const err = healthError(snap) ?? extraErr ?? null;
   return {
     gsd_phase: phase,
+    gsd_phase_num: phaseNum,
+    gsd_phase_name: phaseName,
     gsd_step: step,
     gsd_status: statusFromSnapshot(snap),
     gsd_next: next ? next.slice(0, 80) : null,

@@ -1,0 +1,17 @@
+#!/bin/sh
+# herdr-gsd — CLI launcher for the herdr-gsd-core plugin. Resolves its own location
+# (through symlinks, so it can be linked into ~/.local/bin) and runs the compiled CLI.
+self="$0"
+while [ -L "$self" ]; do
+  target=$(readlink "$self")
+  case "$target" in
+    /*) self="$target" ;;
+    *) self="$(dirname "$self")/$target" ;;
+  esac
+done
+root=$(cd "$(dirname "$self")/.." && pwd -P)
+if [ ! -f "$root/packages/cli/dist/main.js" ]; then
+  echo "herdr-gsd: $root is not built (run: npm ci && npm run build)" >&2
+  exit 1
+fi
+exec node "$root/packages/cli/dist/main.js" "$@"

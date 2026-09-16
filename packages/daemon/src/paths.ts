@@ -52,7 +52,12 @@ export function controlSocketPath(dir: string, socketHash: string): string {
   return path.join(os.tmpdir(), `herdr-gsd-${socketHash}.sock`);
 }
 
-/** Resolve the plugin env Herdr injects, with fallbacks for running outside Herdr (tests / dev). */
+/**
+ * Resolve the plugin env Herdr injects. Outside a Herdr-launched process (the
+ * `bin/herdr-gsd` launcher from a normal shell) the fallbacks are Herdr's own
+ * per-plugin directories, so the CLI talks to the same config file and the same
+ * daemon as the plugin actions do instead of spawning a second daemon elsewhere.
+ */
 export interface PluginEnv {
   pluginId: string;
   pluginRoot: string;
@@ -71,8 +76,8 @@ export function pluginEnv(env: NodeJS.ProcessEnv = process.env, home = os.homedi
   return {
     pluginId,
     pluginRoot: env.HERDR_PLUGIN_ROOT ?? path.resolve(__dirname, '..', '..', '..'),
-    configDir: env.HERDR_PLUGIN_CONFIG_DIR ?? path.join(xdgConfig, 'herdr-gsd-core'),
-    stateDir: env.HERDR_PLUGIN_STATE_DIR ?? path.join(xdgState, 'herdr-gsd-core'),
+    configDir: env.HERDR_PLUGIN_CONFIG_DIR ?? path.join(xdgConfig, 'herdr', 'plugins', 'config', pluginId),
+    stateDir: env.HERDR_PLUGIN_STATE_DIR ?? path.join(xdgState, 'herdr', 'plugins', pluginId),
     herdrSocket: env.HERDR_SOCKET_PATH ?? path.join(xdgConfig, 'herdr', 'herdr.sock'),
     herdrBin: env.HERDR_BIN_PATH ?? 'herdr',
     workspaceId: env.HERDR_WORKSPACE_ID,

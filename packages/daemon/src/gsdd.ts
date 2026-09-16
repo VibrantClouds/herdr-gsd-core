@@ -250,7 +250,7 @@ export class Daemon {
     for (const p of this.projects.values()) p.watcher?.stop();
     if (clearTokens && this.herdrConnected) {
       for (const p of this.projects.values()) {
-        for (const wsId of p.wsTokens.keys()) await this.reportWorkspace(wsId, { gsd_phase: null, gsd_step: null, gsd_status: null, gsd_next: null, gsd_err: null }).catch(() => undefined);
+        for (const wsId of p.wsTokens.keys()) await this.reportWorkspace(wsId, { gsd_phase: null, gsd_phase_num: null, gsd_phase_name: null, gsd_step: null, gsd_status: null, gsd_next: null, gsd_err: null }).catch(() => undefined);
         if (p.driverPaneId) await this.reportPane(p.driverPaneId, { gsd_agent: null, gsd_workers: null, gsd_ctx: null, gsd_tool: null }, undefined).catch(() => undefined);
       }
     }

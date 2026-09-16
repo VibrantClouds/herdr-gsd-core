@@ -214,8 +214,9 @@ async function cmdConfig(ctx: Ctx, sub: string | undefined): Promise<number> {
         fs.writeFileSync(file, DEFAULT_CONFIG_TOML, { flag: 'wx' });
         created = true;
       }
-      out(ctx, `${created ? 'wrote' : 'config'}: ${file}\nedit it, then run the "GSD: restart daemon" action (or: herdr-gsd daemon restart)`, { file, created });
-      if (!ctx.json) notifyError(ctx, created ? 'GSD plugin: config.toml created' : 'GSD plugin: config.toml', `${file} — edit, then "GSD: restart daemon"`);
+      const cli = path.join(ctx.env.pluginRoot, 'bin', 'herdr-gsd');
+      out(ctx, `${created ? 'wrote' : 'config'}: ${file}\nedit it, then run the "GSD: restart daemon" action\nCLI: ${cli}`, { file, created, cli });
+      if (!ctx.json) notifyError(ctx, created ? 'GSD plugin: config.toml created' : 'GSD plugin: config.toml', `${file} — edit, then "GSD: restart daemon". CLI: ${cli}`);
       return 0;
     }
     case 'show': {

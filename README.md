@@ -29,15 +29,15 @@ Requirements: Herdr 0.9.0 or newer, Node 22 or newer, Linux or macOS. GSD-Core i
 
    ```toml
    [ui.sidebar.spaces]
-   rows = [["state_icon", "workspace"], ["branch", "git_status"], ["$gsd_phase", "$gsd_status"]]
+   rows = [["state_icon", "workspace"], ["$gsd_phase_num", "$gsd_status", "$gsd_step"], ["$gsd_phase_name"]]
 
    [ui.sidebar.agents]
    rows = [["state_icon", "machine", "workspace", "tab"], ["agent", "$gsd_agent", "$gsd_tool"]]
    ```
 
-   Any `$gsd_*` token can go in either layout; Herdr's `ui.sidebar.*.rows` reference documents per-token colours and rules. Without this step nothing is visible except notifications and the dashboard pane.
+   Herdr clips each row to the sidebar width (`ui.sidebar_width`, default 26, auto-scaled up to `ui.sidebar_max_width` 36), so long phase names end in `…` when they share a row. The layout above gives the phase name a row of its own: `$gsd_phase_num` and `$gsd_status` are short, `$gsd_phase_name` gets the full width. Raise `ui.sidebar_max_width` if names still clip. `$gsd_phase` is the combined `03 auth` form for when you want a single row. Any `$gsd_*` token can go in either layout; Herdr's `ui.sidebar.*.rows` reference documents per-token colours and rules. Without this step nothing is visible except notifications and the dashboard pane.
 3. Run the action **GSD: show config file** from Herdr's action palette. It creates `config.toml` if it does not exist yet and shows its path in a notification (normally `~/.config/herdr/plugins/config/herdr-gsd-core/config.toml`).
-4. Edit the file. To turn on supervised runs, set `enabled = true` under `[orchestration]`. If GSD is installed in a separate Claude config root, add its path under `[harness.claude-code.env]` (see Orchestration).
+4. Edit the file (the notification also shows the CLI launcher path). To turn on supervised runs, set `enabled = true` under `[orchestration]`. If GSD is installed in a separate Claude config root, add its path under `[harness.claude-code.env]` (see Orchestration).
 5. Run the action **GSD: restart daemon**. The daemon reads the file only when it starts.
 6. Open the dashboard with the action **GSD: open dashboard pane**. To bind a key, add to Herdr's `config.toml`:
 
@@ -67,7 +67,8 @@ Then run the action **GSD: restart daemon** so the running daemon picks up the n
 
 | token | example | meaning |
 |---|---|---|
-| `gsd_phase` | `03 auth` | current phase |
+| `gsd_phase` | `03 auth` | current phase, number and name |
+| `gsd_phase_num`, `gsd_phase_name` | `03`, `auth` | the same split in two, for narrow sidebar rows |
 | `gsd_step` | `execute 2/4` | current step, plan index of total |
 | `gsd_status` | `executing`, `verifying`, `blocked`, `paused`, `complete` | `blocked` also when STATE.md has `## Needs Human`, `## Deferred Verification` or blockers |
 | `gsd_next` | `verify-work 3` | GSD's own recommended next command |
@@ -167,6 +168,8 @@ herdr-gsd adapter doctor claude-code
 herdr-gsd adapter uninstall claude-code
 ```
 
+`herdr-gsd` is the launcher at `<plugin-root>/bin/herdr-gsd` (see CLI below); nothing puts it on your `PATH` for you. If GSD is installed in a separate Claude config root, run the install with `CLAUDE_CONFIG_DIR` set to that root so the hooks land in the settings file Claude actually reads.
+
 ### Degradation matrix
 
 | harness | subagent spans | tool activity | context % | orchestration |
@@ -180,7 +183,13 @@ Everything in "What you see" except pane tokens works with no adapter at all.
 
 ## CLI
 
-`herdr-gsd` is `node <plugin-root>/packages/cli/dist/main.js`; `herdr plugin list` prints the plugin root. Add `--json` for machine output.
+The plugin ships a launcher, `<plugin-root>/bin/herdr-gsd`, which runs `node packages/cli/dist/main.js` from its own checkout. Nothing installs it on your `PATH`; the action **GSD: show config file** prints its full path in the notification, and `herdr plugin list --json` shows `plugin_root`. To use it as `herdr-gsd`:
+
+```bash
+ln -s "<plugin-root>/bin/herdr-gsd" ~/.local/bin/herdr-gsd
+```
+
+Add `--json` for machine output.
 
 | command | purpose |
 |---|---|
