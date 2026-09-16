@@ -25,6 +25,7 @@ function usage(): string {
   event                        handle a Herdr plugin event (HERDR_PLUGIN_EVENT_JSON)
   adapter install|uninstall|doctor <claude-code|codex|opencode> [--global|--local <dir>]
   config init|path|show        create the commented default config.toml if missing / print its path / show the effective config
+  dashboard open               open the dashboard pane (via herdr plugin pane open); the manifest action "dashboard" wraps this
   orchestrate plan|phase|isolated|autonomous [--root <dir>] [--command "<gsd cmd>"] [--phase N] [--from N] [--to N] [--dry-run]
   orchestrate stop [--run <id>|--all] [--discard]     stop the run(s) of the current workspace/project
   orchestrate list|status [--root <dir>]              runs (status also shows a notification)
@@ -172,6 +173,14 @@ async function main(argv: string[]): Promise<number> {
         return await cmdOrchestrate(ctx, sub, rest);
       case 'config':
         return await cmdConfig(ctx, sub);
+      case 'dashboard': {
+        // Herdr keys bind to plugin *actions*, not panes (plugins.mdx "Keybindings"), so this
+        // action makes the dashboard pane bindable: [[keys.command]] type = "plugin_action" command = "herdr-gsd-core.dashboard"
+        const r = spawnSync(env.herdrBin, ['plugin', 'pane', 'open', '--plugin', env.pluginId, '--entrypoint', 'dashboard'], { encoding: 'utf8', timeout: 10_000 });
+        const line = (r.stdout || '').trim().split('\n').find((l) => l.startsWith('{'));
+        out(ctx, r.status === 0 ? `dashboard opened${line ? ': ' + line.slice(0, 200) : ''}` : `could not open the dashboard: ${(r.stderr || r.stdout || '').trim().slice(0, 300)}`, { ok: r.status === 0, output: line });
+        return r.status === 0 ? 0 : 1;
+      }
       case 'version':
       case '--version':
         out(ctx, DAEMON_VERSION, { version: DAEMON_VERSION });

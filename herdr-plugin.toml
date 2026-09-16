@@ -33,6 +33,12 @@ contexts = ["workspace"]
 command = ["node", "packages/cli/dist/main.js", "notify", "test"]
 
 [[actions]]
+id = "dashboard"
+title = "GSD: open dashboard pane"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "dashboard", "open"]
+
+[[actions]]
 id = "config"
 title = "GSD: show config file (creates it if missing)"
 contexts = ["workspace"]

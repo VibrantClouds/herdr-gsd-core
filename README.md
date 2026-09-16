@@ -15,6 +15,13 @@ herdr plugin install VibrantClouds/herdr-gsd-core --yes
 
 Requirements: Herdr 0.9.0 or newer, Node 22 or newer, Linux or macOS. GSD-Core itself is optional at runtime; when `gsd-tools` is found it is used for extra detail, read-only.
 
+## What appears where
+
+- **Sidebar**: one extra line of text on each GSD workspace's row (for example `04 Images executing`), and on agent rows when an adapter is installed. It is a row layout, not a panel; step 2 below switches it on.
+- **Notifications**: a desktop or Herdr toast when a phase changes, a UAT file appears, the project is paused, or the agent is waiting for you.
+- **Dashboard pane**: the full progress view (phases, plans, blockers, next command, runs, activity). It is a pane you open with the action **GSD: open dashboard pane**, a key bound to it, or `herdr plugin pane open --plugin herdr-gsd-core --entrypoint dashboard`. It does not open by itself.
+- **Supervised runs** (opt-in): a new pane or worktree in which your agent runs GSD's next command, tracked in the dashboard.
+
 ## Quick start
 
 1. Install, then open or restart Herdr. The plugin's daemon starts and reports `$gsd_phase $gsd_step $gsd_status $gsd_next` on every workspace whose repository has a `.planning/`.
@@ -32,7 +39,27 @@ Requirements: Herdr 0.9.0 or newer, Node 22 or newer, Linux or macOS. GSD-Core i
 3. Run the action **GSD: show config file** from Herdr's action palette. It creates `config.toml` if it does not exist yet and shows its path in a notification (normally `~/.config/herdr/plugins/config/herdr-gsd-core/config.toml`).
 4. Edit the file. To turn on supervised runs, set `enabled = true` under `[orchestration]`. If GSD is installed in a separate Claude config root, add its path under `[harness.claude-code.env]` (see Orchestration).
 5. Run the action **GSD: restart daemon**. The daemon reads the file only when it starts.
-6. Optional: open the dashboard pane and install a harness adapter for tool-level activity on the pane (both below).
+6. Open the dashboard with the action **GSD: open dashboard pane**. To bind a key, add to Herdr's `config.toml`:
+
+   ```toml
+   [[keys.command]]
+   key = "prefix+g"
+   type = "plugin_action"
+   command = "herdr-gsd-core.dashboard"
+   description = "GSD dashboard"
+   ```
+
+7. Optional: install a harness adapter for tool-level activity on the pane (below).
+
+## Updating
+
+Herdr has no `plugin update`; reinstalling replaces the managed checkout and keeps your config and state:
+
+```bash
+herdr plugin install VibrantClouds/herdr-gsd-core --yes
+```
+
+Then run the action **GSD: restart daemon** so the running daemon picks up the new code (Herdr re-reads the manifest and actions on its own).
 
 ## What you see
 
