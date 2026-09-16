@@ -14,9 +14,11 @@ because "it probably still works."
 | Codex | **not installed** | hooks.json shape from GSD's own installer source, not a live Codex process | Low — all Codex payload fixtures are speculative-by-analogy to Claude Code's schema and MUST be re-verified before the adapter ships (see "Codex unverified fields" below) |
 | OpenCode | installed, `@opencode-ai/plugin@0.15.18` | plugin API from raw HTML docs + two live installed plugin files | High — cross-checked against two independently-authored, currently-loaded plugins on this machine |
 
-**Platform:** Linux (Fedora, kernel 7.2) tested this session. macOS is untested — spec's
-"linux, macos" platform support (§0) is unverified for macOS-specific paths (fs.watch
-behavior, `~/.codex`/`~/.claude` resolution on macOS, Bun/OpenCode on macOS).
+**Platform:** Linux (Fedora, kernel 7.2) tested locally. macOS is tested by CI (`macos-latest`,
+2026-09-16): unit tests, gates M0–M5 including the real-Herdr e2e in a headless session. Two
+macOS-specific findings are folded in: FSEvents may deliver a directory's write events in a later
+debounced batch, and `/var/folders` / `/tmp` are symlinks to `/private/…`, so caller-supplied
+project roots are matched by real path. Harness adapters on macOS remain a manual checklist.
 
 ### GSD-Core 1.8.0 floor — not tested
 

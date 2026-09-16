@@ -24,7 +24,8 @@ Build a **reduced** M4. Kept: phase run in a new pane, isolated phase run in a w
 - [x] M5: `.github/workflows/ci.yml` (ubuntu + macos, pinned Herdr 0.9.0 + GSD-Core 1.14.0, gates M0–M5, `herdr plugin install` on the default branch), `scripts/e2e-herdr.cjs` (real Herdr, throwaway session), `verify:m5`, README (orchestration, degradation matrix incl. orchestration column, stance), TESTING.md, DECISIONS.md O1–O6 + M5, spec §13.1, COMPAT.md
 - [x] Live: plan-only e2e green; `E2E_RUN=1` with a real Claude Code caught the no-driver split bug (O5), the reattach-during-startup bug, and the missing status transitions (H10/O7); the final live run completed split → trust dialog → answered → `/gsd-help` → working → done
 - [x] Live after daemon restart: `milestone.lock` was blanking CharacterDossier's tokens → no longer treated as a lock (O8)
-- [ ] Publish: `gh` installed to `~/.local/bin`; needs `gh auth login` by the owner, then `gh repo create VibrantClouds/herdr-gsd-core --public --source . --push` and `gh repo edit --add-topic herdr-plugin` (see "Exact next action")
+- [x] Published: https://github.com/VibrantClouds/herdr-gsd-core (public, topics herdr-plugin/gsd/herdr). The gh OAuth token lacks the `workflow` scope, so `origin` is SSH.
+- [x] CI green on ubuntu-latest and macos-latest (run 35091784927) after four fixes CI itself found: unref'd notifier retry timer cancelled tests on Node 22; macOS FSEvents batch timing in the watcher test; macOS `/var → /private/var` symlinked roots needed real-path matching in every control method (a real user-facing bug); manual binds keep the caller's spelling. The ubuntu job also proved `herdr plugin install VibrantClouds/herdr-gsd-core --yes --ref <sha>` into a clean headless session.
 
 ### Environment (tested matrix, see docs/COMPAT.md)
 Herdr 0.9.0 (protocol 22) · GSD-Core 1.14.0 · Node 24.21 (engine ≥22) · Claude Code 2.1.273 · OpenCode present · Codex absent.
@@ -47,13 +48,13 @@ Herdr 0.9.0 (protocol 22) · GSD-Core 1.14.0 · Node 24.21 (engine ≥22) · Cla
 - Daemon start-up takes ~8–13 s on projects where gsd-tools enrichment runs during the first resync (the control socket answers earlier; orchestrate.* requests wait for readiness). Tokens still appear within ~250 ms from the filesystem pass.
 - A run that finished (`done`) leaves its pane open on purpose; `orchestrate stop` only tears down active runs.
 - Claude Code's folder-trust dialog in fresh worktrees is documented (trust inherits from an ancestor); not automated by design.
-- macOS untested locally; CI's `macos-latest` job is the first real check.
+- macOS is covered by CI only (unit tests, gates M0–M5 with the real-Herdr e2e); no local macOS run.
 
 ### Exact next action
-1. Owner: `gh auth login` (the CLI is installed at `~/.local/bin/gh`, SSH to GitHub already works).
-2. Then, from the repo root: `gh repo create VibrantClouds/herdr-gsd-core --public --source . --remote origin --push --description "Herdr plugin for GSD-Core: sidebar tokens, notifications, dashboard, supervised runs"` and `gh repo edit VibrantClouds/herdr-gsd-core --add-topic herdr-plugin --add-topic gsd --add-topic herdr`.
-3. Watch the first CI run (macOS job is the untested platform); `herdr plugin install VibrantClouds/herdr-gsd-core --yes` from a clean machine closes M5.
-4. On the live server: `herdr plugin action invoke daemon-restart --plugin herdr-gsd-core` after every rebuild so the running daemon picks up new code; `[orchestration] enabled = true` in `herdr plugin config-dir herdr-gsd-core`/config.toml to turn orchestration on.
+1. Owner: turn orchestration on for real use — `[orchestration] enabled = true` plus `[harness.claude-code.env] CLAUDE_CONFIG_DIR = "/home/vibrantclouds/.claude-gsd"` in `$(herdr plugin config-dir herdr-gsd-core)/config.toml`, then the `GSD: restart daemon` action; walk the orchestration checklist in docs/TESTING.md on a real project.
+2. Check the marketplace card at herdr.dev/plugins after its next index pass (≤ 30 min after push).
+3. Follow-ups in "Known gaps": real Codex spike (M0-B), a GSD upstream ask for a session-scoped `herdr plugin link`.
+4. After every rebuild on the live server: `herdr plugin action invoke daemon-restart --plugin herdr-gsd-core`.
 
 ## Session 1 — 2026-09-15
 
