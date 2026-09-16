@@ -23,7 +23,7 @@ function usage(): string {
   project list|rescan [root]   list bound projects / force a rescan
   notify test                  send a test notification through gsdd
   event                        handle a Herdr plugin event (HERDR_PLUGIN_EVENT_JSON)
-  adapter install|uninstall|doctor <claude-code|codex|opencode> [--global|--local <dir>]
+  adapter install|uninstall|doctor <claude-code|codex|opencode|all> [--global|--local <dir>]
   config init|path|show        create the commented default config.toml if missing / print its path / show the effective config
   dashboard open               open the dashboard pane (via herdr plugin pane open); the manifest action "dashboard" wraps this
   orchestrate plan|phase|isolated|autonomous [--root <dir>] [--command "<gsd cmd>"] [--phase N] [--from N] [--to N] [--dry-run]
@@ -324,6 +324,8 @@ interface AdapterOpts {
   dir?: string;
   pluginRoot: string;
   spoolDir: string;
+  /** process env plus `[harness.<name>.env]` from config.toml for keys the process lacks (e.g. CLAUDE_CONFIG_DIR) */
+  env: NodeJS.ProcessEnv;
 }
 interface AdapterResult {
   file?: string;
@@ -332,18 +334,37 @@ interface AdapterResult {
   [k: string]: unknown;
 }
 
+const ADAPTERS = ['claude-code', 'codex', 'opencode'] as const;
+
+/**
+ * `adapter install|uninstall|doctor <harness|all>`. The harness config root comes from the
+ * process env (CLAUDE_CONFIG_DIR, CODEX_HOME, OPENCODE_CONFIG_DIR) and, when the process lacks
+ * it, from `[harness.<name>.env]` in config.toml — so the manifest actions, which run under
+ * Herdr's environment rather than your shell's, still install into the root GSD uses.
+ */
 async function cmdAdapter(ctx: Ctx, sub: string | undefined, rest: string[]): Promise<number> {
-  const harness = rest[0];
-  if (!sub || !harness || !['claude-code', 'codex', 'opencode'].includes(harness)) {
+  const which = rest[0];
+  if (!sub || !which || !(which === 'all' || (ADAPTERS as readonly string[]).includes(which))) {
     process.stderr.write(usage() + '\n');
     return 2;
   }
+  if (which === 'all') {
+    let worst = 0;
+    for (const h of ADAPTERS) worst = Math.max(worst, await cmdAdapter(ctx, sub, [h, ...rest.slice(1)]));
+    return worst;
+  }
+  const harness = which;
+  const { loadConfig } = await import('@herdr-gsd/core');
+  const cfg = (await loadConfig(path.join(ctx.env.configDir, 'config.toml'))).config;
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  for (const [k, v] of Object.entries(cfg.harness[harness]?.env ?? {})) if (env[k] === undefined || env[k] === '') env[k] = v;
   const localIdx = rest.indexOf('--local');
   const opts: AdapterOpts = {
     scope: localIdx >= 0 ? 'local' : 'global',
     dir: localIdx >= 0 ? path.resolve(rest[localIdx + 1] ?? process.cwd()) : undefined,
     pluginRoot: ctx.env.pluginRoot,
     spoolDir: ctx.paths.spoolDir,
+    env,
   };
   const modPath = path.join(ctx.env.pluginRoot, 'packages', 'adapters', harness, 'dist', 'index.js');
   if (!fs.existsSync(modPath)) {
@@ -356,6 +377,7 @@ async function cmdAdapter(ctx: Ctx, sub: string | undefined, rest: string[]): Pr
     case 'install': {
       const r = await mod.install(opts);
       out(ctx, `${harness}: installed${r.file ? ` → ${r.file}` : ''}${r.message ? ` (${r.message})` : ''}`, r);
+      if (!ctx.json) notifyError(ctx, `GSD adapter installed: ${harness}`, `${r.file ?? ''} — start a new ${harness} session to see pane tokens`);
       return 0;
     }
     case 'uninstall': {
@@ -366,6 +388,10 @@ async function cmdAdapter(ctx: Ctx, sub: string | undefined, rest: string[]): Pr
     case 'doctor': {
       const r = await mod.doctor(opts);
       out(ctx, r.findings.map((f) => `${f.level.padEnd(5)} ${f.message}`).join('\n') + `\n${harness}: ${r.ok ? 'ok' : 'problems found'}`, r);
+      if (!ctx.json) {
+        const first = r.findings.find((f) => f.level === 'error') ?? r.findings.find((f) => f.level === 'warn');
+        notifyError(ctx, `GSD adapter ${harness}: ${r.ok ? 'ok' : 'not ready'}`, first ? first.message : 'installed and healthy');
+      }
       return r.ok ? 0 : 1;
     }
     default:

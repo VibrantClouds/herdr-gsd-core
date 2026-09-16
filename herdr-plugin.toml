@@ -39,6 +39,36 @@ contexts = ["workspace"]
 command = ["node", "packages/cli/dist/main.js", "dashboard", "open"]
 
 [[actions]]
+id = "adapter-install-claude-code"
+title = "GSD: install Claude Code adapter (pane activity tokens)"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "adapter", "install", "claude-code"]
+
+[[actions]]
+id = "adapter-install-codex"
+title = "GSD: install Codex adapter"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "adapter", "install", "codex"]
+
+[[actions]]
+id = "adapter-install-opencode"
+title = "GSD: install OpenCode adapter"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "adapter", "install", "opencode"]
+
+[[actions]]
+id = "adapter-uninstall-all"
+title = "GSD: uninstall all harness adapters"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "adapter", "uninstall", "all"]
+
+[[actions]]
+id = "adapter-doctor"
+title = "GSD: check harness adapters"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "adapter", "doctor", "all"]
+
+[[actions]]
 id = "config"
 title = "GSD: show config file (creates it if missing)"
 contexts = ["workspace"]

@@ -157,18 +157,33 @@ Two practical notes:
 
 ## Harness adapters (optional)
 
-Adapters add hook entries to the harness so subagent and tool activity shows on the pane. They only add entries whose command points at the plugin's own hook script, and `uninstall` removes exactly those.
+Adapters add hook entries to the coding agent so subagent and tool activity shows on its pane (`$gsd_agent`, `$gsd_workers`, `$gsd_tool`, `$gsd_ctx`). They only add entries whose command points at the plugin's own hook script, and uninstall removes exactly those, leaving the file otherwise unchanged.
 
-```bash
-herdr-gsd adapter install claude-code            # $CLAUDE_CONFIG_DIR or ~/.claude/settings.json
-herdr-gsd adapter install claude-code --local .  # <project>/.claude/settings.json for a project-local GSD
-herdr-gsd adapter install codex                  # ~/.codex/hooks.json
-herdr-gsd adapter install opencode               # ~/.config/opencode/plugins/herdr-gsd-core.js
-herdr-gsd adapter doctor claude-code
-herdr-gsd adapter uninstall claude-code
+Install from Herdr's action palette:
+
+| action | writes to |
+|---|---|
+| **GSD: install Claude Code adapter** | `$CLAUDE_CONFIG_DIR/settings.json`, else `~/.claude/settings.json` |
+| **GSD: install Codex adapter** | `$CODEX_HOME/hooks.json`, else `~/.codex/hooks.json` |
+| **GSD: install OpenCode adapter** | `~/.config/opencode/plugins/herdr-gsd-core.js` |
+| **GSD: check harness adapters** | nothing; reports what is installed and any problems |
+| **GSD: uninstall all harness adapters** | removes the plugin's entries from all three |
+
+Actions run under Herdr's environment, not your shell's. If GSD is installed in a separate Claude config root, put it in the plugin config first so the hooks land in the settings file Claude actually reads:
+
+```toml
+[harness.claude-code.env]
+CLAUDE_CONFIG_DIR = "/home/me/.claude-gsd"
 ```
 
-`herdr-gsd` is the launcher at `<plugin-root>/bin/herdr-gsd` (see CLI below); nothing puts it on your `PATH` for you. If GSD is installed in a separate Claude config root, run the install with `CLAUDE_CONFIG_DIR` set to that root so the hooks land in the settings file Claude actually reads.
+Then start a new agent session; the pane row shows the tokens within a few seconds of the first tool call. The same operations exist on the CLI launcher for scripting or a project-local settings file:
+
+```bash
+"$PLUGIN_ROOT/bin/herdr-gsd" adapter install claude-code --local .   # <project>/.claude/settings.json
+"$PLUGIN_ROOT/bin/herdr-gsd" adapter doctor all
+```
+
+`PLUGIN_ROOT` is the checkout Herdr installed: `herdr plugin list --json` shows it as `plugin_root`, and the **GSD: show config file** notification prints the launcher's full path.
 
 ### Degradation matrix
 
