@@ -51,13 +51,18 @@ test('fs.watch mode: debounced batch with filenames, ignores lock files', async 
   await fs.writeFile(path.join(p, 'STATE.md.lock'), '1');
   await fs.writeFile(path.join(p, 'STATE.md'), '# state 2\n');
   await fs.writeFile(path.join(p, 'phases', '01-a', '01-01-PLAN.md'), 'plan');
-  const first = await waitFor(() => batches[0]);
-  assert.ok(first.includes('STATE.md'), JSON.stringify(first));
-  assert.ok(!first.some((f) => f.endsWith('.lock')));
-  assert.ok(first.some((f) => f.endsWith('01-01-PLAN.md')));
+  // macOS FSEvents may split the three writes across batches or report the nested file
+  // by its directory; wait until the union of batches covers both files, then assert on it.
+  const seen = () => batches.flat();
+  await waitFor(() => (seen().includes('STATE.md') && seen().some((f) => f.endsWith('01-01-PLAN.md') || f.includes('phases')) ? true : undefined));
+  const all = seen();
+  assert.ok(all.includes('STATE.md'), JSON.stringify(batches));
+  assert.ok(!all.some((f) => f.endsWith('.lock')), JSON.stringify(batches));
+  assert.ok(all.some((f) => f.endsWith('01-01-PLAN.md') || f.includes('phases')), JSON.stringify(batches));
+  const n = batches.length;
   w.poke();
-  await waitFor(() => batches[1]);
-  assert.deepEqual(batches[1], []);
+  await waitFor(() => batches[n]);
+  assert.deepEqual(batches[n], []);
   w.stop();
   assert.equal(w.mode, 'stopped');
   w.stop();

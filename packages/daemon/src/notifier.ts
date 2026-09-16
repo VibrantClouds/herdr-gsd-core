@@ -141,10 +141,9 @@ export class Notifier {
     }
     if (r.reason === 'rate_limited' || r.reason === 'busy') {
       this.stats.retried++;
-      await new Promise<void>((resolve) => {
-        const t = this.setTimeoutFn(resolve, this.retryMs);
-        (t as { unref?: () => void }).unref?.();
-      });
+      // Referenced on purpose: an unref'd timer here lets Node 22 exit the loop mid-retry
+      // (the pending promise is then cancelled — seen in CI); 5 s of liveness is harmless.
+      await new Promise<void>((resolve) => void this.setTimeoutFn(resolve, this.retryMs));
       try {
         const r2 = await this.opts.show(p);
         if (r2.shown) this.stats.shown++;
