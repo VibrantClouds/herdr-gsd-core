@@ -1,0 +1,14 @@
+{
+  "session_id": "a1b2c3d4-0001-4a11-8f00-000000000001",
+  "transcript_path": "/home/user/.claude/projects/-home-user-myproj/a1b2c3d4-0001-4a11-8f00-000000000001.jsonl",
+  "cwd": "/home/user/myproj",
+  "hook_event_name": "PreToolUse",
+  "permission_mode": "default",
+  "tool_name": "Agent",
+  "tool_use_id": "toolu_01AGENTSPAWN0001",
+  "tool_input": {
+    "subagent_type": "gsd-executor",
+    "description": "Execute phase 03 plan 2",
+    "prompt": "Implement the changes described in plans/03-auth/02-execute.md ..."
+  }
+}

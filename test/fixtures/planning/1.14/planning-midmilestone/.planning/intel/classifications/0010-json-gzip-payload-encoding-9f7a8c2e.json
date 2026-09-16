@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0010-json-gzip-payload-encoding.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0010: Share payloads are JSON, stored gzipped at rest",
+  "summary": "Share payloads are JSON with gzip compression at rest; images stored separately as content-addressed objects.",
+  "scope": ["JSON encoding", "gzip compression", "S3 storage", "share payloads", "API requests/responses", "Content-Encoding"],
+  "cross_refs": ["ADR-0012", "SPEC-storage-s3.md"],
+  "locked": true,
+  "precedence": null
+}

@@ -1,0 +1,12 @@
+{
+  "sessionID": "ses_0001",
+  "callID": "call_0001",
+  "tool": "edit",
+  "args": {
+    "filePath": "/home/user/myproj/src/auth/login.ts"
+  },
+  "output": {
+    "title": "login.ts",
+    "metadata": {}
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/README.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Character Dossier — specification set",
+  "summary": "Guide to the Character Dossier specification repository structure, reading order, system invariants, and GSD ingest workflow.",
+  "scope": ["Character Dossier", "specification", "repository guide", "GSD", "document taxonomy", "invariants"],
+  "cross_refs": ["prd/PRD-character-dossier.md", "adr/0001", "adr/0016", "specs/SPEC-domain-model.md", "specs/SPEC-subdocument-plugin-contract.md", "specs/SPEC-intimacy-dossier.md", "specs/SPEC-gallery-and-portrait.md", "specs/SPEC-share-api.md", "specs/SPEC-storage-s3.md", "specs/SPEC-image-pipeline.md", "specs/SPEC-frontend-architecture.md", "specs/SPEC-design-system.md", "specs/SPEC-serialization-policy.md", "specs/SPEC-security-and-abuse.md", "specs/SPEC-deployment.md"],
+  "locked": false,
+  "precedence": null
+}

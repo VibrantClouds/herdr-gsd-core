@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0015-visual-direction-evolve-dossier.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0015: The visual direction evolves the prototype's editorial dossier look, in light and dark",
+  "summary": "Extended prototype's design system with light/dark theming, custom typography, and interaction patterns; rejected SizeLab adoption.",
+  "scope": ["design system", "light/dark theming", "typography", "CSS custom properties", "ARIA accessibility", "mobile-first design"],
+  "cross_refs": ["SPEC-design-system.md", "ADR-0014"],
+  "locked": true,
+  "precedence": null
+}

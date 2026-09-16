@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-storage-s3.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — S3 Storage Layout",
+  "summary": "S3 storage layout specification for shares, images, IAM policies, cost model, and garbage collection.",
+  "scope": ["S3", "share objects", "image objects", "CloudFront", "IAM policies", "cost model", "garbage collection"],
+  "cross_refs": ["0006-privacy-unguessable-id-plaintext-s3.md", "0010-json-gzip-payload-encoding.md", "0012-content-addressed-images-no-gc.md", "0004-share-links-snapshot-and-living.md", "SPEC-share-api.md", "SPEC-domain-model.md", "SPEC-security-and-abuse.md", "SPEC-deployment.md"],
+  "locked": false,
+  "precedence": null
+}

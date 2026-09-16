@@ -1,0 +1,38 @@
+{
+  "milestone_version": "v1.0",
+  "milestone_name": null,
+  "phases": [
+    {
+      "number": "01",
+      "name": "foundation library",
+      "plans": 6,
+      "summaries": 6,
+      "status": "Complete"
+    },
+    {
+      "number": "02",
+      "name": "intimacy plugin unified page",
+      "plans": 7,
+      "summaries": 7,
+      "status": "Complete"
+    },
+    {
+      "number": "03",
+      "name": "snapshot share end to end",
+      "plans": 8,
+      "summaries": 8,
+      "status": "Complete"
+    },
+    {
+      "number": "04",
+      "name": "images",
+      "plans": 0,
+      "summaries": 0,
+      "status": "Pending"
+    }
+  ],
+  "total_plans": 21,
+  "total_summaries": 21,
+  "percent": null,
+  "phase_scope": "unscoped"
+}

@@ -1,0 +1,2015 @@
+{
+  "focused_workspace_id": "w2",
+  "focused_pane_id": "w2:p1",
+  "steps": [
+    {
+      "step": "s0",
+      "request": {
+        "id": "s0",
+        "method": "session.snapshot",
+        "params": {}
+      },
+      "response": {
+        "id": "s0",
+        "result": {
+          "type": "session_snapshot",
+          "snapshot": {
+            "version": "0.9.0",
+            "protocol": 22,
+            "focused_workspace_id": "w2",
+            "focused_tab_id": "w2:t1",
+            "focused_pane_id": "w2:p1",
+            "workspaces": [
+              {
+                "workspace_id": "w1",
+                "number": 1,
+                "label": "CharacterDossier",
+                "focused": false,
+                "pane_count": 1,
+                "tab_count": 1,
+                "active_tab_id": "w1:t1",
+                "agent_status": "working"
+              },
+              {
+                "workspace_id": "w2",
+                "number": 2,
+                "label": "SizeComparisonSite",
+                "focused": true,
+                "pane_count": 1,
+                "tab_count": 1,
+                "active_tab_id": "w2:t1",
+                "agent_status": "working"
+              },
+              {
+                "workspace_id": "w3",
+                "number": 3,
+                "label": "gsd-core-herdr",
+                "focused": false,
+                "pane_count": 1,
+                "tab_count": 1,
+                "active_tab_id": "w3:t1",
+                "agent_status": "working"
+              }
+            ],
+            "tabs": [
+              {
+                "tab_id": "w1:t1",
+                "workspace_id": "w1",
+                "number": 1,
+                "label": "1",
+                "focused": false,
+                "pane_count": 1,
+                "agent_status": "working"
+              },
+              {
+                "tab_id": "w2:t1",
+                "workspace_id": "w2",
+                "number": 1,
+                "label": "1",
+                "focused": true,
+                "pane_count": 1,
+                "agent_status": "working"
+              },
+              {
+                "tab_id": "w3:t1",
+                "workspace_id": "w3",
+                "number": 1,
+                "label": "1",
+                "focused": false,
+                "pane_count": 1,
+                "agent_status": "working"
+              }
+            ],
+            "panes": [
+              {
+                "pane_id": "w1:p1",
+                "terminal_id": "term_65b8e8aad4c3a1",
+                "workspace_id": "w1",
+                "tab_id": "w1:t1",
+                "focused": false,
+                "cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "foreground_cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "agent": "claude",
+                "terminal_title": "◐ Character Dossier",
+                "terminal_title_stripped": "Character Dossier",
+                "agent_status": "working",
+                "scroll": {
+                  "offset_from_bottom": 0,
+                  "max_offset_from_bottom": 0,
+                  "viewport_rows": 67
+                },
+                "revision": 3
+              },
+              {
+                "pane_id": "w2:p1",
+                "terminal_id": "term_65b8f9b8fc1142",
+                "workspace_id": "w2",
+                "tab_id": "w2:t1",
+                "focused": true,
+                "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "agent": "claude",
+                "terminal_title": "◐ Sizelab",
+                "terminal_title_stripped": "Sizelab",
+                "agent_status": "working",
+                "scroll": {
+                  "offset_from_bottom": 0,
+                  "max_offset_from_bottom": 0,
+                  "viewport_rows": 67
+                },
+                "revision": 5
+              },
+              {
+                "pane_id": "w3:p1",
+                "terminal_id": "term_65b901fb2382d3",
+                "workspace_id": "w3",
+                "tab_id": "w3:t1",
+                "focused": false,
+                "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "agent": "claude",
+                "terminal_title": "◑ Implement spec.md",
+                "terminal_title_stripped": "Implement spec.md",
+                "agent_status": "working",
+                "agent_session": {
+                  "source": "herdr:claude",
+                  "agent": "claude",
+                  "kind": "id",
+                  "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+                },
+                "scroll": {
+                  "offset_from_bottom": 0,
+                  "max_offset_from_bottom": 0,
+                  "viewport_rows": 67
+                },
+                "revision": 4
+              }
+            ],
+            "layouts": [
+              {
+                "workspace_id": "w1",
+                "tab_id": "w1:t1",
+                "zoomed": false,
+                "area": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 67
+                },
+                "focused_pane_id": "w1:p1",
+                "panes": [
+                  {
+                    "pane_id": "w1:p1",
+                    "focused": true,
+                    "rect": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 100,
+                      "height": 67
+                    }
+                  }
+                ],
+                "splits": []
+              },
+              {
+                "workspace_id": "w2",
+                "tab_id": "w2:t1",
+                "zoomed": false,
+                "area": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 67
+                },
+                "focused_pane_id": "w2:p1",
+                "panes": [
+                  {
+                    "pane_id": "w2:p1",
+                    "focused": true,
+                    "rect": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 100,
+                      "height": 67
+                    }
+                  }
+                ],
+                "splits": []
+              },
+              {
+                "workspace_id": "w3",
+                "tab_id": "w3:t1",
+                "zoomed": false,
+                "area": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 67
+                },
+                "focused_pane_id": "w3:p1",
+                "panes": [
+                  {
+                    "pane_id": "w3:p1",
+                    "focused": true,
+                    "rect": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 100,
+                      "height": 67
+                    }
+                  }
+                ],
+                "splits": []
+              }
+            ],
+            "agents": [
+              {
+                "terminal_id": "term_65b8e8aad4c3a1",
+                "agent": "claude",
+                "terminal_title": "◐ Character Dossier",
+                "terminal_title_stripped": "Character Dossier",
+                "agent_status": "working",
+                "workspace_id": "w1",
+                "tab_id": "w1:t1",
+                "pane_id": "w1:p1",
+                "focused": false,
+                "state_change_seq": 76,
+                "cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "foreground_cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "revision": 3
+              },
+              {
+                "terminal_id": "term_65b8f9b8fc1142",
+                "agent": "claude",
+                "terminal_title": "◐ Sizelab",
+                "terminal_title_stripped": "Sizelab",
+                "agent_status": "working",
+                "workspace_id": "w2",
+                "tab_id": "w2:t1",
+                "pane_id": "w2:p1",
+                "focused": true,
+                "state_change_seq": 94,
+                "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "revision": 5
+              },
+              {
+                "terminal_id": "term_65b901fb2382d3",
+                "agent": "claude",
+                "terminal_title": "◑ Implement spec.md",
+                "terminal_title_stripped": "Implement spec.md",
+                "agent_status": "working",
+                "agent_session": {
+                  "source": "herdr:claude",
+                  "agent": "claude",
+                  "kind": "id",
+                  "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+                },
+                "workspace_id": "w3",
+                "tab_id": "w3:t1",
+                "pane_id": "w3:p1",
+                "focused": false,
+                "state_change_seq": 92,
+                "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "revision": 4
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "step": "subscribe",
+      "request": {
+        "method": "events.subscribe"
+      },
+      "response": {
+        "id": "sub_1",
+        "result": {
+          "type": "subscription_started"
+        }
+      }
+    },
+    {
+      "step": "w1_set",
+      "request": {
+        "id": "w1_set",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 1,
+          "tokens": {
+            "gsd_probe": "hello"
+          }
+        }
+      },
+      "response": {
+        "id": "w1_set",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "w1_get",
+      "request": {
+        "id": "w1_get",
+        "method": "workspace.get",
+        "params": {
+          "workspace_id": "w2"
+        }
+      },
+      "response": {
+        "id": "w1_get",
+        "result": {
+          "type": "workspace_info",
+          "workspace": {
+            "workspace_id": "w2",
+            "number": 2,
+            "label": "SizeComparisonSite",
+            "focused": true,
+            "pane_count": 1,
+            "tab_count": 1,
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_probe": "hello"
+            }
+          }
+        }
+      }
+    },
+    {
+      "step": "w1_verify_workspace_get",
+      "response": {
+        "type": "workspace_info",
+        "workspace": {
+          "workspace_id": "w2",
+          "number": 2,
+          "label": "SizeComparisonSite",
+          "focused": true,
+          "pane_count": 1,
+          "tab_count": 1,
+          "active_tab_id": "w2:t1",
+          "agent_status": "working",
+          "tokens": {
+            "gsd_probe": "hello"
+          }
+        }
+      }
+    },
+    {
+      "step": "w1_list",
+      "request": {
+        "id": "w1_list",
+        "method": "workspace.list",
+        "params": {}
+      },
+      "response": {
+        "id": "w1_list",
+        "result": {
+          "type": "workspace_list",
+          "workspaces": [
+            {
+              "workspace_id": "w1",
+              "number": 1,
+              "label": "CharacterDossier",
+              "focused": false,
+              "pane_count": 1,
+              "tab_count": 1,
+              "active_tab_id": "w1:t1",
+              "agent_status": "working"
+            },
+            {
+              "workspace_id": "w2",
+              "number": 2,
+              "label": "SizeComparisonSite",
+              "focused": true,
+              "pane_count": 1,
+              "tab_count": 1,
+              "active_tab_id": "w2:t1",
+              "agent_status": "working",
+              "tokens": {
+                "gsd_probe": "hello"
+              }
+            },
+            {
+              "workspace_id": "w3",
+              "number": 3,
+              "label": "gsd-core-herdr",
+              "focused": false,
+              "pane_count": 1,
+              "tab_count": 1,
+              "active_tab_id": "w3:t1",
+              "agent_status": "working"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "w1_verify_workspace_list_entry",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "hello"
+        }
+      }
+    },
+    {
+      "step": "w1_snap",
+      "request": {
+        "id": "w1_snap",
+        "method": "session.snapshot",
+        "params": {}
+      },
+      "response": {
+        "id": "w1_snap",
+        "result": {
+          "type": "session_snapshot",
+          "snapshot": {
+            "version": "0.9.0",
+            "protocol": 22,
+            "focused_workspace_id": "w2",
+            "focused_tab_id": "w2:t1",
+            "focused_pane_id": "w2:p1",
+            "workspaces": [
+              {
+                "workspace_id": "w1",
+                "number": 1,
+                "label": "CharacterDossier",
+                "focused": false,
+                "pane_count": 1,
+                "tab_count": 1,
+                "active_tab_id": "w1:t1",
+                "agent_status": "working"
+              },
+              {
+                "workspace_id": "w2",
+                "number": 2,
+                "label": "SizeComparisonSite",
+                "focused": true,
+                "pane_count": 1,
+                "tab_count": 1,
+                "active_tab_id": "w2:t1",
+                "agent_status": "working",
+                "tokens": {
+                  "gsd_probe": "hello"
+                }
+              },
+              {
+                "workspace_id": "w3",
+                "number": 3,
+                "label": "gsd-core-herdr",
+                "focused": false,
+                "pane_count": 1,
+                "tab_count": 1,
+                "active_tab_id": "w3:t1",
+                "agent_status": "working"
+              }
+            ],
+            "tabs": [
+              {
+                "tab_id": "w1:t1",
+                "workspace_id": "w1",
+                "number": 1,
+                "label": "1",
+                "focused": false,
+                "pane_count": 1,
+                "agent_status": "working"
+              },
+              {
+                "tab_id": "w2:t1",
+                "workspace_id": "w2",
+                "number": 1,
+                "label": "1",
+                "focused": true,
+                "pane_count": 1,
+                "agent_status": "working"
+              },
+              {
+                "tab_id": "w3:t1",
+                "workspace_id": "w3",
+                "number": 1,
+                "label": "1",
+                "focused": false,
+                "pane_count": 1,
+                "agent_status": "working"
+              }
+            ],
+            "panes": [
+              {
+                "pane_id": "w1:p1",
+                "terminal_id": "term_65b8e8aad4c3a1",
+                "workspace_id": "w1",
+                "tab_id": "w1:t1",
+                "focused": false,
+                "cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "foreground_cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "agent": "claude",
+                "terminal_title": "◐ Character Dossier",
+                "terminal_title_stripped": "Character Dossier",
+                "agent_status": "working",
+                "scroll": {
+                  "offset_from_bottom": 0,
+                  "max_offset_from_bottom": 0,
+                  "viewport_rows": 67
+                },
+                "revision": 3
+              },
+              {
+                "pane_id": "w2:p1",
+                "terminal_id": "term_65b8f9b8fc1142",
+                "workspace_id": "w2",
+                "tab_id": "w2:t1",
+                "focused": true,
+                "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "agent": "claude",
+                "terminal_title": "◐ Sizelab",
+                "terminal_title_stripped": "Sizelab",
+                "agent_status": "working",
+                "scroll": {
+                  "offset_from_bottom": 0,
+                  "max_offset_from_bottom": 0,
+                  "viewport_rows": 67
+                },
+                "revision": 5
+              },
+              {
+                "pane_id": "w3:p1",
+                "terminal_id": "term_65b901fb2382d3",
+                "workspace_id": "w3",
+                "tab_id": "w3:t1",
+                "focused": false,
+                "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "agent": "claude",
+                "terminal_title": "◑ Implement spec.md",
+                "terminal_title_stripped": "Implement spec.md",
+                "agent_status": "working",
+                "agent_session": {
+                  "source": "herdr:claude",
+                  "agent": "claude",
+                  "kind": "id",
+                  "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+                },
+                "scroll": {
+                  "offset_from_bottom": 0,
+                  "max_offset_from_bottom": 0,
+                  "viewport_rows": 67
+                },
+                "revision": 4
+              }
+            ],
+            "layouts": [
+              {
+                "workspace_id": "w1",
+                "tab_id": "w1:t1",
+                "zoomed": false,
+                "area": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 67
+                },
+                "focused_pane_id": "w1:p1",
+                "panes": [
+                  {
+                    "pane_id": "w1:p1",
+                    "focused": true,
+                    "rect": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 100,
+                      "height": 67
+                    }
+                  }
+                ],
+                "splits": []
+              },
+              {
+                "workspace_id": "w2",
+                "tab_id": "w2:t1",
+                "zoomed": false,
+                "area": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 67
+                },
+                "focused_pane_id": "w2:p1",
+                "panes": [
+                  {
+                    "pane_id": "w2:p1",
+                    "focused": true,
+                    "rect": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 100,
+                      "height": 67
+                    }
+                  }
+                ],
+                "splits": []
+              },
+              {
+                "workspace_id": "w3",
+                "tab_id": "w3:t1",
+                "zoomed": false,
+                "area": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 100,
+                  "height": 67
+                },
+                "focused_pane_id": "w3:p1",
+                "panes": [
+                  {
+                    "pane_id": "w3:p1",
+                    "focused": true,
+                    "rect": {
+                      "x": 0,
+                      "y": 0,
+                      "width": 100,
+                      "height": 67
+                    }
+                  }
+                ],
+                "splits": []
+              }
+            ],
+            "agents": [
+              {
+                "terminal_id": "term_65b8e8aad4c3a1",
+                "agent": "claude",
+                "terminal_title": "◐ Character Dossier",
+                "terminal_title_stripped": "Character Dossier",
+                "agent_status": "working",
+                "workspace_id": "w1",
+                "tab_id": "w1:t1",
+                "pane_id": "w1:p1",
+                "focused": false,
+                "state_change_seq": 76,
+                "cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "foreground_cwd": "/home/vibrantclouds/Development/CharacterDossier",
+                "revision": 3
+              },
+              {
+                "terminal_id": "term_65b8f9b8fc1142",
+                "agent": "claude",
+                "terminal_title": "◐ Sizelab",
+                "terminal_title_stripped": "Sizelab",
+                "agent_status": "working",
+                "workspace_id": "w2",
+                "tab_id": "w2:t1",
+                "pane_id": "w2:p1",
+                "focused": true,
+                "state_change_seq": 94,
+                "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+                "revision": 5
+              },
+              {
+                "terminal_id": "term_65b901fb2382d3",
+                "agent": "claude",
+                "terminal_title": "◑ Implement spec.md",
+                "terminal_title_stripped": "Implement spec.md",
+                "agent_status": "working",
+                "agent_session": {
+                  "source": "herdr:claude",
+                  "agent": "claude",
+                  "kind": "id",
+                  "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+                },
+                "workspace_id": "w3",
+                "tab_id": "w3:t1",
+                "pane_id": "w3:p1",
+                "focused": false,
+                "state_change_seq": 92,
+                "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+                "revision": 4
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "step": "w1_verify_snapshot_entry",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "hello"
+        }
+      }
+    },
+    {
+      "step": "w2_same_seq",
+      "request": {
+        "id": "w2_same_seq",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 1,
+          "tokens": {
+            "gsd_probe": "SHOULD_BE_IGNORED"
+          }
+        }
+      },
+      "response": {
+        "id": "w2_same_seq",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "w2_get",
+      "request": {
+        "id": "w2_get",
+        "method": "workspace.get",
+        "params": {
+          "workspace_id": "w2"
+        }
+      },
+      "response": {
+        "id": "w2_get",
+        "result": {
+          "type": "workspace_info",
+          "workspace": {
+            "workspace_id": "w2",
+            "number": 2,
+            "label": "SizeComparisonSite",
+            "focused": true,
+            "pane_count": 1,
+            "tab_count": 1,
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_probe": "hello"
+            }
+          }
+        }
+      }
+    },
+    {
+      "step": "w2_after_same_seq",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "hello"
+        }
+      }
+    },
+    {
+      "step": "w3_lower_seq",
+      "request": {
+        "id": "w3_lower_seq",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 0,
+          "tokens": {
+            "gsd_probe": "LOWER_SEQ"
+          }
+        }
+      },
+      "response": {
+        "id": "w3_lower_seq",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "w3_get",
+      "request": {
+        "id": "w3_get",
+        "method": "workspace.get",
+        "params": {
+          "workspace_id": "w2"
+        }
+      },
+      "response": {
+        "id": "w3_get",
+        "result": {
+          "type": "workspace_info",
+          "workspace": {
+            "workspace_id": "w2",
+            "number": 2,
+            "label": "SizeComparisonSite",
+            "focused": true,
+            "pane_count": 1,
+            "tab_count": 1,
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_probe": "hello"
+            }
+          }
+        }
+      }
+    },
+    {
+      "step": "w3_after_lower_seq",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "hello"
+        }
+      }
+    },
+    {
+      "step": "w4_higher_seq",
+      "request": {
+        "id": "w4_higher_seq",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 2,
+          "tokens": {
+            "gsd_probe": "hello2"
+          }
+        }
+      },
+      "response": {
+        "id": "w4_higher_seq",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "w4_get",
+      "request": {
+        "id": "w4_get",
+        "method": "workspace.get",
+        "params": {
+          "workspace_id": "w2"
+        }
+      },
+      "response": {
+        "id": "w4_get",
+        "result": {
+          "type": "workspace_info",
+          "workspace": {
+            "workspace_id": "w2",
+            "number": 2,
+            "label": "SizeComparisonSite",
+            "focused": true,
+            "pane_count": 1,
+            "tab_count": 1,
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_probe": "hello2"
+            }
+          }
+        }
+      }
+    },
+    {
+      "step": "w4_after_higher_seq",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "hello2"
+        }
+      }
+    },
+    {
+      "step": "w5_bad_name",
+      "request": {
+        "id": "w5_bad_name",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 3,
+          "tokens": {
+            "bad name": "x"
+          }
+        }
+      },
+      "response": {
+        "id": "w5_bad_name",
+        "error": {
+          "code": "invalid_metadata_token",
+          "message": "invalid metadata token key: bad name"
+        }
+      }
+    },
+    {
+      "step": "w5_long_value",
+      "request": {
+        "id": "w5_long_value",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 4,
+          "tokens": {
+            "gsd_long": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        }
+      },
+      "response": {
+        "id": "w5_long_value",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "w5_get",
+      "request": {
+        "id": "w5_get",
+        "method": "workspace.get",
+        "params": {
+          "workspace_id": "w2"
+        }
+      },
+      "response": {
+        "id": "w5_get",
+        "result": {
+          "type": "workspace_info",
+          "workspace": {
+            "workspace_id": "w2",
+            "number": 2,
+            "label": "SizeComparisonSite",
+            "focused": true,
+            "pane_count": 1,
+            "tab_count": 1,
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_long": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "gsd_probe": "hello2"
+            }
+          }
+        }
+      }
+    },
+    {
+      "step": "w5_after_limits",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_long": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "gsd_probe": "hello2"
+        }
+      }
+    },
+    {
+      "step": "w6_clear",
+      "request": {
+        "id": "w6_clear",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 5,
+          "tokens": {
+            "gsd_probe": null,
+            "gsd_long": null
+          }
+        }
+      },
+      "response": {
+        "id": "w6_clear",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "w6_get",
+      "request": {
+        "id": "w6_get",
+        "method": "workspace.get",
+        "params": {
+          "workspace_id": "w2"
+        }
+      },
+      "response": {
+        "id": "w6_get",
+        "result": {
+          "type": "workspace_info",
+          "workspace": {
+            "workspace_id": "w2",
+            "number": 2,
+            "label": "SizeComparisonSite",
+            "focused": true,
+            "pane_count": 1,
+            "tab_count": 1,
+            "active_tab_id": "w2:t1",
+            "agent_status": "working"
+          }
+        }
+      }
+    },
+    {
+      "step": "w6_after_clear",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working"
+      }
+    },
+    {
+      "step": "p1_set_ttl",
+      "request": {
+        "id": "p1_set_ttl",
+        "method": "pane.report_metadata",
+        "params": {
+          "pane_id": "w2:p1",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 1,
+          "tokens": {
+            "gsd_probe": "pane-hello"
+          },
+          "ttl_ms": 4000
+        }
+      },
+      "response": {
+        "id": "p1_set_ttl",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "p1_get",
+      "request": {
+        "id": "p1_get",
+        "method": "pane.get",
+        "params": {
+          "pane_id": "w2:p1"
+        }
+      },
+      "response": {
+        "id": "p1_get",
+        "result": {
+          "type": "pane_info",
+          "pane": {
+            "pane_id": "w2:p1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "workspace_id": "w2",
+            "tab_id": "w2:t1",
+            "focused": true,
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "agent": "claude",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_probe": "pane-hello"
+            },
+            "scroll": {
+              "offset_from_bottom": 0,
+              "max_offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "revision": 6
+          }
+        }
+      }
+    },
+    {
+      "step": "p1_pane_get",
+      "response": {
+        "pane_id": "w2:p1",
+        "terminal_id": "term_65b8f9b8fc1142",
+        "workspace_id": "w2",
+        "tab_id": "w2:t1",
+        "focused": true,
+        "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "agent": "claude",
+        "terminal_title": "◐ Sizelab",
+        "terminal_title_stripped": "Sizelab",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "pane-hello"
+        },
+        "scroll": {
+          "offset_from_bottom": 0,
+          "max_offset_from_bottom": 0,
+          "viewport_rows": 67
+        },
+        "revision": 6
+      }
+    },
+    {
+      "step": "p1_ag",
+      "request": {
+        "id": "p1_ag",
+        "method": "agent.get",
+        "params": {
+          "target": "w2:p1"
+        }
+      },
+      "response": {
+        "id": "p1_ag",
+        "result": {
+          "type": "agent_info",
+          "agent": {
+            "terminal_id": "term_65b8f9b8fc1142",
+            "agent": "claude",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_probe": "pane-hello"
+            },
+            "workspace_id": "w2",
+            "tab_id": "w2:t1",
+            "pane_id": "w2:p1",
+            "focused": true,
+            "state_change_seq": 94,
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "revision": 6
+          }
+        }
+      }
+    },
+    {
+      "step": "p1_agent_get",
+      "response": {
+        "terminal_id": "term_65b8f9b8fc1142",
+        "agent": "claude",
+        "terminal_title": "◐ Sizelab",
+        "terminal_title_stripped": "Sizelab",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "pane-hello"
+        },
+        "workspace_id": "w2",
+        "tab_id": "w2:t1",
+        "pane_id": "w2:p1",
+        "focused": true,
+        "state_change_seq": 94,
+        "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "revision": 6
+      }
+    },
+    {
+      "step": "p1_list",
+      "request": {
+        "id": "p1_list",
+        "method": "pane.list",
+        "params": {}
+      },
+      "response": {
+        "id": "p1_list",
+        "result": {
+          "type": "pane_list",
+          "panes": [
+            {
+              "pane_id": "w1:p1",
+              "terminal_id": "term_65b8e8aad4c3a1",
+              "workspace_id": "w1",
+              "tab_id": "w1:t1",
+              "focused": false,
+              "cwd": "/home/vibrantclouds/Development/CharacterDossier",
+              "foreground_cwd": "/home/vibrantclouds/Development/CharacterDossier",
+              "agent": "claude",
+              "terminal_title": "◐ Character Dossier",
+              "terminal_title_stripped": "Character Dossier",
+              "agent_status": "working",
+              "scroll": {
+                "offset_from_bottom": 0,
+                "max_offset_from_bottom": 0,
+                "viewport_rows": 67
+              },
+              "revision": 3
+            },
+            {
+              "pane_id": "w2:p1",
+              "terminal_id": "term_65b8f9b8fc1142",
+              "workspace_id": "w2",
+              "tab_id": "w2:t1",
+              "focused": true,
+              "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+              "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+              "agent": "claude",
+              "terminal_title": "◐ Sizelab",
+              "terminal_title_stripped": "Sizelab",
+              "agent_status": "working",
+              "tokens": {
+                "gsd_probe": "pane-hello"
+              },
+              "scroll": {
+                "offset_from_bottom": 0,
+                "max_offset_from_bottom": 0,
+                "viewport_rows": 67
+              },
+              "revision": 6
+            },
+            {
+              "pane_id": "w3:p1",
+              "terminal_id": "term_65b901fb2382d3",
+              "workspace_id": "w3",
+              "tab_id": "w3:t1",
+              "focused": false,
+              "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+              "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+              "agent": "claude",
+              "terminal_title": "◑ Implement spec.md",
+              "terminal_title_stripped": "Implement spec.md",
+              "agent_status": "working",
+              "agent_session": {
+                "source": "herdr:claude",
+                "agent": "claude",
+                "kind": "id",
+                "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+              },
+              "scroll": {
+                "offset_from_bottom": 0,
+                "max_offset_from_bottom": 0,
+                "viewport_rows": 67
+              },
+              "revision": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "p1_pane_list_entry",
+      "response": {
+        "pane_id": "w2:p1",
+        "terminal_id": "term_65b8f9b8fc1142",
+        "workspace_id": "w2",
+        "tab_id": "w2:t1",
+        "focused": true,
+        "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "agent": "claude",
+        "terminal_title": "◐ Sizelab",
+        "terminal_title_stripped": "Sizelab",
+        "agent_status": "working",
+        "tokens": {
+          "gsd_probe": "pane-hello"
+        },
+        "scroll": {
+          "offset_from_bottom": 0,
+          "max_offset_from_bottom": 0,
+          "viewport_rows": 67
+        },
+        "revision": 6
+      }
+    },
+    {
+      "step": "p2_get",
+      "request": {
+        "id": "p2_get",
+        "method": "pane.get",
+        "params": {
+          "pane_id": "w2:p1"
+        }
+      },
+      "response": {
+        "id": "p2_get",
+        "result": {
+          "type": "pane_info",
+          "pane": {
+            "pane_id": "w2:p1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "workspace_id": "w2",
+            "tab_id": "w2:t1",
+            "focused": true,
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "agent": "claude",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "agent_status": "working",
+            "scroll": {
+              "offset_from_bottom": 0,
+              "max_offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "revision": 7
+          }
+        }
+      }
+    },
+    {
+      "step": "p2_after_ttl_expiry_5s",
+      "response": {
+        "pane_id": "w2:p1",
+        "terminal_id": "term_65b8f9b8fc1142",
+        "workspace_id": "w2",
+        "tab_id": "w2:t1",
+        "focused": true,
+        "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "agent": "claude",
+        "terminal_title": "◐ Sizelab",
+        "terminal_title_stripped": "Sizelab",
+        "agent_status": "working",
+        "scroll": {
+          "offset_from_bottom": 0,
+          "max_offset_from_bottom": 0,
+          "viewport_rows": 67
+        },
+        "revision": 7
+      }
+    },
+    {
+      "step": "p3_set",
+      "request": {
+        "id": "p3_set",
+        "method": "pane.report_metadata",
+        "params": {
+          "pane_id": "w2:p1",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 2,
+          "tokens": {
+            "gsd_probe": "pane-hello2"
+          }
+        }
+      },
+      "response": {
+        "id": "p3_set",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "p3_get",
+      "request": {
+        "id": "p3_get",
+        "method": "pane.get",
+        "params": {
+          "pane_id": "w2:p1"
+        }
+      },
+      "response": {
+        "id": "p3_get",
+        "result": {
+          "type": "pane_info",
+          "pane": {
+            "pane_id": "w2:p1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "workspace_id": "w2",
+            "tab_id": "w2:t1",
+            "focused": true,
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "agent": "claude",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "agent_status": "working",
+            "tokens": {
+              "gsd_probe": "pane-hello2"
+            },
+            "scroll": {
+              "offset_from_bottom": 0,
+              "max_offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "revision": 8
+          }
+        }
+      }
+    },
+    {
+      "step": "p3_after_set",
+      "response": {
+        "gsd_probe": "pane-hello2"
+      }
+    },
+    {
+      "step": "p4_clear",
+      "request": {
+        "id": "p4_clear",
+        "method": "pane.report_metadata",
+        "params": {
+          "pane_id": "w2:p1",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 3,
+          "tokens": {
+            "gsd_probe": null
+          }
+        }
+      },
+      "response": {
+        "id": "p4_clear",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "p4_get",
+      "request": {
+        "id": "p4_get",
+        "method": "pane.get",
+        "params": {
+          "pane_id": "w2:p1"
+        }
+      },
+      "response": {
+        "id": "p4_get",
+        "result": {
+          "type": "pane_info",
+          "pane": {
+            "pane_id": "w2:p1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "workspace_id": "w2",
+            "tab_id": "w2:t1",
+            "focused": true,
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "agent": "claude",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "agent_status": "working",
+            "scroll": {
+              "offset_from_bottom": 0,
+              "max_offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "revision": 9
+          }
+        }
+      }
+    },
+    {
+      "step": "p4_after_clear",
+      "response": {
+        "pane_id": "w2:p1",
+        "terminal_id": "term_65b8f9b8fc1142",
+        "workspace_id": "w2",
+        "tab_id": "w2:t1",
+        "focused": true,
+        "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "agent": "claude",
+        "terminal_title": "◐ Sizelab",
+        "terminal_title_stripped": "Sizelab",
+        "agent_status": "working",
+        "scroll": {
+          "offset_from_bottom": 0,
+          "max_offset_from_bottom": 0,
+          "viewport_rows": 67
+        },
+        "revision": 9
+      }
+    },
+    {
+      "step": "p5_set",
+      "request": {
+        "id": "p5_set",
+        "method": "pane.report_metadata",
+        "params": {
+          "pane_id": "w2:p1",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 4,
+          "tokens": {
+            "gsd_probe": "x"
+          }
+        }
+      },
+      "response": {
+        "id": "p5_set",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "p5_empty",
+      "request": {
+        "id": "p5_empty",
+        "method": "pane.report_metadata",
+        "params": {
+          "pane_id": "w2:p1",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 5,
+          "tokens": {
+            "gsd_probe": ""
+          }
+        }
+      },
+      "response": {
+        "id": "p5_empty",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "p5_get",
+      "request": {
+        "id": "p5_get",
+        "method": "pane.get",
+        "params": {
+          "pane_id": "w2:p1"
+        }
+      },
+      "response": {
+        "id": "p5_get",
+        "result": {
+          "type": "pane_info",
+          "pane": {
+            "pane_id": "w2:p1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "workspace_id": "w2",
+            "tab_id": "w2:t1",
+            "focused": true,
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "agent": "claude",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "agent_status": "working",
+            "scroll": {
+              "offset_from_bottom": 0,
+              "max_offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "revision": 11
+          }
+        }
+      }
+    },
+    {
+      "step": "p5_after_empty_string",
+      "response": null
+    },
+    {
+      "step": "cleanup_pane",
+      "request": {
+        "id": "cleanup_pane",
+        "method": "pane.report_metadata",
+        "params": {
+          "pane_id": "w2:p1",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 6,
+          "tokens": {
+            "gsd_probe": null
+          }
+        }
+      },
+      "response": {
+        "id": "cleanup_pane",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "cleanup_ws",
+      "request": {
+        "id": "cleanup_ws",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "plugin:herdr-gsd-core",
+          "seq": 6,
+          "tokens": {
+            "gsd_probe": null,
+            "gsd_long": null
+          }
+        }
+      },
+      "response": {
+        "id": "cleanup_ws",
+        "result": {
+          "type": "ok"
+        }
+      }
+    },
+    {
+      "step": "f1",
+      "request": {
+        "id": "f1",
+        "method": "workspace.get",
+        "params": {
+          "workspace_id": "w2"
+        }
+      },
+      "response": {
+        "id": "f1",
+        "result": {
+          "type": "workspace_info",
+          "workspace": {
+            "workspace_id": "w2",
+            "number": 2,
+            "label": "SizeComparisonSite",
+            "focused": true,
+            "pane_count": 1,
+            "tab_count": 1,
+            "active_tab_id": "w2:t1",
+            "agent_status": "working"
+          }
+        }
+      }
+    },
+    {
+      "step": "final_workspace",
+      "response": {
+        "workspace_id": "w2",
+        "number": 2,
+        "label": "SizeComparisonSite",
+        "focused": true,
+        "pane_count": 1,
+        "tab_count": 1,
+        "active_tab_id": "w2:t1",
+        "agent_status": "working"
+      }
+    },
+    {
+      "step": "f2",
+      "request": {
+        "id": "f2",
+        "method": "pane.get",
+        "params": {
+          "pane_id": "w2:p1"
+        }
+      },
+      "response": {
+        "id": "f2",
+        "result": {
+          "type": "pane_info",
+          "pane": {
+            "pane_id": "w2:p1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "workspace_id": "w2",
+            "tab_id": "w2:t1",
+            "focused": true,
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "agent": "claude",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "agent_status": "working",
+            "scroll": {
+              "offset_from_bottom": 0,
+              "max_offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "revision": 11
+          }
+        }
+      }
+    },
+    {
+      "step": "final_pane",
+      "response": {
+        "pane_id": "w2:p1",
+        "terminal_id": "term_65b8f9b8fc1142",
+        "workspace_id": "w2",
+        "tab_id": "w2:t1",
+        "focused": true,
+        "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "agent": "claude",
+        "terminal_title": "◐ Sizelab",
+        "terminal_title_stripped": "Sizelab",
+        "agent_status": "working",
+        "scroll": {
+          "offset_from_bottom": 0,
+          "max_offset_from_bottom": 0,
+          "viewport_rows": 67
+        },
+        "revision": 11
+      }
+    }
+  ],
+  "events": [
+    {
+      "dt_ms": 0,
+      "msg": {
+        "id": "sub_1",
+        "result": {
+          "type": "subscription_started"
+        }
+      }
+    },
+    {
+      "dt_ms": 201,
+      "msg": {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "focused": true,
+            "label": "SizeComparisonSite",
+            "number": 2,
+            "pane_count": 1,
+            "tab_count": 1,
+            "tokens": {
+              "gsd_probe": "hello"
+            },
+            "workspace_id": "w2"
+          }
+        },
+        "event": "workspace_metadata_updated"
+      }
+    },
+    {
+      "dt_ms": 1804,
+      "msg": {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "focused": true,
+            "label": "SizeComparisonSite",
+            "number": 2,
+            "pane_count": 1,
+            "tab_count": 1,
+            "tokens": {
+              "gsd_probe": "hello2"
+            },
+            "workspace_id": "w2"
+          }
+        },
+        "event": "workspace_metadata_updated"
+      }
+    },
+    {
+      "dt_ms": 2205,
+      "msg": {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "focused": true,
+            "label": "SizeComparisonSite",
+            "number": 2,
+            "pane_count": 1,
+            "tab_count": 1,
+            "tokens": {
+              "gsd_long": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "gsd_probe": "hello2"
+            },
+            "workspace_id": "w2"
+          }
+        },
+        "event": "workspace_metadata_updated"
+      }
+    },
+    {
+      "dt_ms": 2506,
+      "msg": {
+        "data": {
+          "type": "workspace_metadata_updated",
+          "workspace": {
+            "active_tab_id": "w2:t1",
+            "agent_status": "working",
+            "focused": true,
+            "label": "SizeComparisonSite",
+            "number": 2,
+            "pane_count": 1,
+            "tab_count": 1,
+            "workspace_id": "w2"
+          }
+        },
+        "event": "workspace_metadata_updated"
+      }
+    },
+    {
+      "dt_ms": 2807,
+      "msg": {
+        "data": {
+          "pane": {
+            "agent": "claude",
+            "agent_status": "working",
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "focused": true,
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "pane_id": "w2:p1",
+            "revision": 6,
+            "scroll": {
+              "max_offset_from_bottom": 0,
+              "offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "tab_id": "w2:t1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "tokens": {
+              "gsd_probe": "pane-hello"
+            },
+            "workspace_id": "w2"
+          },
+          "type": "pane_updated"
+        },
+        "event": "pane_updated"
+      }
+    },
+    {
+      "dt_ms": 6716,
+      "msg": {
+        "data": {
+          "pane": {
+            "agent": "claude",
+            "agent_status": "working",
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "focused": true,
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "pane_id": "w2:p1",
+            "revision": 7,
+            "scroll": {
+              "max_offset_from_bottom": 0,
+              "offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "tab_id": "w2:t1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "workspace_id": "w2"
+          },
+          "type": "pane_updated"
+        },
+        "event": "pane_updated"
+      }
+    },
+    {
+      "dt_ms": 8019,
+      "msg": {
+        "data": {
+          "pane": {
+            "agent": "claude",
+            "agent_status": "working",
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "focused": true,
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "pane_id": "w2:p1",
+            "revision": 8,
+            "scroll": {
+              "max_offset_from_bottom": 0,
+              "offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "tab_id": "w2:t1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "tokens": {
+              "gsd_probe": "pane-hello2"
+            },
+            "workspace_id": "w2"
+          },
+          "type": "pane_updated"
+        },
+        "event": "pane_updated"
+      }
+    },
+    {
+      "dt_ms": 8319,
+      "msg": {
+        "data": {
+          "pane": {
+            "agent": "claude",
+            "agent_status": "working",
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "focused": true,
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "pane_id": "w2:p1",
+            "revision": 9,
+            "scroll": {
+              "max_offset_from_bottom": 0,
+              "offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "tab_id": "w2:t1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "workspace_id": "w2"
+          },
+          "type": "pane_updated"
+        },
+        "event": "pane_updated"
+      }
+    },
+    {
+      "dt_ms": 8620,
+      "msg": {
+        "data": {
+          "pane": {
+            "agent": "claude",
+            "agent_status": "working",
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "focused": true,
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "pane_id": "w2:p1",
+            "revision": 10,
+            "scroll": {
+              "max_offset_from_bottom": 0,
+              "offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "tab_id": "w2:t1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "tokens": {
+              "gsd_probe": "x"
+            },
+            "workspace_id": "w2"
+          },
+          "type": "pane_updated"
+        },
+        "event": "pane_updated"
+      }
+    },
+    {
+      "dt_ms": 8720,
+      "msg": {
+        "data": {
+          "pane": {
+            "agent": "claude",
+            "agent_status": "working",
+            "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "focused": true,
+            "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+            "pane_id": "w2:p1",
+            "revision": 11,
+            "scroll": {
+              "max_offset_from_bottom": 0,
+              "offset_from_bottom": 0,
+              "viewport_rows": 67
+            },
+            "tab_id": "w2:t1",
+            "terminal_id": "term_65b8f9b8fc1142",
+            "terminal_title": "◐ Sizelab",
+            "terminal_title_stripped": "Sizelab",
+            "workspace_id": "w2"
+          },
+          "type": "pane_updated"
+        },
+        "event": "pane_updated"
+      }
+    }
+  ]
+}

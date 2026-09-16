@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0002-character-core-fields.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0002: Character core fields are name, species/build, pronouns, orientation and portrait",
+  "summary": "Defines CharacterCore as containing id, name, species, pronouns, orientation, and portrait; other fields belong in sub-documents.",
+  "scope": ["CharacterCore", "character fields", "name", "species", "pronouns", "orientation", "portrait"],
+  "cross_refs": ["SPEC-domain-model.md", "ADR-0011", "ADR-0012", "SPEC-gallery-and-portrait.md"],
+  "locked": true,
+  "precedence": null
+}

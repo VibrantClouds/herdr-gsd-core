@@ -1,0 +1,1 @@
+{"content":"better-sqlite3: enable WAL via db.pragma('journal_mode = WAL') immediately after opening; WAL allows concurrent readers during writes; db.transaction(fn) wraps bulk writes for atomicity/perf; synchronous API avoids callback nesting.","source":"web","provider":"websearch","confidence":"LOW","fetched_at":"2026-07-23T01:11:56.043Z","ttl":86400000,"kind":"docs"}

@@ -1,0 +1,5 @@
+---
+result: pass
+---
+
+All good.

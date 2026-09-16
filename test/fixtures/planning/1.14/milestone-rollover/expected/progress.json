@@ -1,0 +1,17 @@
+{
+  "milestone_version": "v1.1",
+  "milestone_name": "Measurement Ruler",
+  "phases": [
+    {
+      "number": "07",
+      "name": "coordinate scale correctness foundations",
+      "plans": 0,
+      "summaries": 0,
+      "status": "Pending"
+    }
+  ],
+  "total_plans": 0,
+  "total_summaries": 0,
+  "percent": 0,
+  "phase_scope": "complete"
+}

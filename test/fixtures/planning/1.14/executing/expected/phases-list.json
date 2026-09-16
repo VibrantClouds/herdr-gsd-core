@@ -1,0 +1,8 @@
+{
+  "directories": [
+    "01-foundation-registry-state-machine",
+    "02-execution-worktree-runner-billing-safety"
+  ],
+  "count": 2,
+  "phase_scope": "unscoped"
+}

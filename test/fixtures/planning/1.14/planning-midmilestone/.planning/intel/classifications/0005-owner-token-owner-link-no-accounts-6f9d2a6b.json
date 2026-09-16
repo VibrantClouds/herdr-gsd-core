@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0005-owner-token-owner-link-no-accounts.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0005: Ownership is a bearer token carried in an owner link; there are no accounts",
+  "summary": "Ownership verified via bearer token in owner link; no accounts, login, or database.",
+  "scope": ["bearer tokens", "owner links", "ownership verification", "anonymous product", "IndexedDB", "shares", "publishing"],
+  "cross_refs": ["ADR-0004", "SPEC-share-api.md", "SPEC-security-and-abuse.md"],
+  "locked": true,
+  "precedence": null
+}

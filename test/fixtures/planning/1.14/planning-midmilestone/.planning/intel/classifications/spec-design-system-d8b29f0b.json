@@ -1,0 +1,30 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-design-system.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Design System — Character Dossier",
+  "summary": "Design system specification: CSS tokens, component anatomy, layout rules, accessibility requirements, and print specifications.",
+  "scope": [
+    "CSS custom properties",
+    "design tokens",
+    "typography",
+    "colors",
+    "spacing",
+    "components",
+    "layout",
+    "masthead",
+    "cards",
+    "rating cards",
+    "meters",
+    "sliders",
+    "buttons",
+    "dialogs",
+    "accessibility",
+    "print",
+    "motion"
+  ],
+  "cross_refs": [],
+  "locked": false,
+  "precedence": null
+}

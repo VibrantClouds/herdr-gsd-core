@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0008-monorepo-shared-schema-package.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0008: pnpm monorepo with a shared schema package consumed by web and api",
+  "summary": "Organize repository as pnpm workspace with three packages (web, api, schema) using Zod schemas as single source of truth for shared type validation.",
+  "scope": ["pnpm", "monorepo", "workspace", "schema package", "TypeScript", "Zod", "type validation", "Angular", "Node.js", "migrations"],
+  "cross_refs": ["SPEC-frontend-architecture.md", "SPEC-subdocument-plugin-contract.md"],
+  "locked": true,
+  "precedence": null
+}

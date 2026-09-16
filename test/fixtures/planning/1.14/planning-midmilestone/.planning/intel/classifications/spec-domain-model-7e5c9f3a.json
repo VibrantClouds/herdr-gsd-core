@@ -1,0 +1,28 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-domain-model.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Domain Model",
+  "summary": "Defines persisted data structures, schemas, versioning strategy, and implementation constraints for Character Dossier.",
+  "scope": [
+    "Character",
+    "CharacterCore",
+    "SubDocument",
+    "ImageRef",
+    "SharePayload",
+    "IndexedDB",
+    "schema versioning",
+    "data models",
+    "type constraints",
+    "string caps"
+  ],
+  "cross_refs": [
+    "0008-monorepo-shared-schema-package.md",
+    "0011-per-plugin-schema-versioning.md",
+    "SPEC-serialization-policy.md",
+    "SPEC-storage-s3.md"
+  ],
+  "locked": false,
+  "precedence": null
+}

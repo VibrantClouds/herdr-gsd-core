@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0001-code-defined-subdocument-templates.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0001: Sub-document types are code-defined typed templates with fixed rating lists",
+  "summary": "Code-defined typed templates with fixed rating lists for sub-document types; one instance per character.",
+  "scope": ["sub-document types", "TypeScript schema", "code-defined templates", "rating lists", "character", "version", "migration", "Angular editor"],
+  "cross_refs": ["SPEC-subdocument-plugin-contract.md", "SPEC-intimacy-dossier.md", "SPEC-gallery-and-portrait.md", "ADR-0008", "ADR-0011", "ADR-0003"],
+  "locked": true,
+  "precedence": null
+}

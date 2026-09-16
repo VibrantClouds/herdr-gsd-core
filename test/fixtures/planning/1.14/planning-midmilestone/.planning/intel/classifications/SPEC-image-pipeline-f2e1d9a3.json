@@ -1,0 +1,28 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-image-pipeline.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Image Pipeline",
+  "summary": "Technical specification for image compression, storage, and retrieval pipeline with content addressing and S3 integration.",
+  "scope": [
+    "image compression",
+    "WebP encoding",
+    "JPEG encoding",
+    "S3 storage",
+    "content addressing",
+    "IndexedDB",
+    "budget management",
+    "image dimensions",
+    "hash verification"
+  ],
+  "cross_refs": [
+    "0012-content-addressed-images-no-gc.md",
+    "SPEC-domain-model.md",
+    "SPEC-share-api.md",
+    "SPEC-storage-s3.md",
+    "SPEC-frontend-architecture.md"
+  ],
+  "locked": false,
+  "precedence": null
+}

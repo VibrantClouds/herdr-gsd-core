@@ -1,0 +1,23 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-security-and-abuse.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Security and Abuse Posture",
+  "summary": "Technical specification of backend security controls, threat model scope, accepted risks, and incident procedures for an anonymous image-sharing service.",
+  "scope": ["security controls", "threat model", "rate limiting", "image validation", "owner token", "takedown procedure", "abuse mitigation", "ASVS Level 1"],
+  "cross_refs": [
+    "SPEC-share-api.md",
+    "SPEC-domain-model.md",
+    "SPEC-serialization-policy.md",
+    "SPEC-image-pipeline.md",
+    "SPEC-storage-s3.md",
+    "SPEC-deployment.md",
+    "0005-owner-token-owner-link-no-accounts.md",
+    "0006-privacy-unguessable-id-plaintext-s3.md",
+    "0013-adult-gate-interstitial.md",
+    "docs/README.md"
+  ],
+  "locked": false,
+  "precedence": null
+}

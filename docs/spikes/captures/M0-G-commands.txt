@@ -1,0 +1,598 @@
+================================================================
+M0-G CAPTURE — GSD-Core 1.14.0 slash commands + plan/wave model
+Package root: /home/vibrantclouds/.npm/_npx/a78857a30883db8e/node_modules/@opengsd/gsd-core
+Captured: 2026-09-16T02:25:27Z  (read-only inspection)
+================================================================
+
+## 0. INVOCATION NAME
+Source command files: $P/commands/gsd/<name>.md, frontmatter 'name: gsd:<name>'.
+bin/install.js for modern Claude Code installs them as SKILLS:
+  skills/gsd-<name>/SKILL.md with 'name: gsd-<name>'  ->  invoked as /gsd-<name>
+  install.js:7609  'Claude Code 2.1.88+ uses skills/xxx/SKILL.md instead of commands/gsd/xxx.md.'
+  install.js:9848  '#1367: Claude local now writes flat gsd-*.md files at commands/ (not commands/gsd/).'
+  install.js:1908-1909  // CONV-07: Command name conversion (all gsd: references -> gsd-)
+  install.js:1958-1962  colon form is the DEPRECATED legacy form (#2808).
+=> Canonical modern form: /gsd-<name>. Colon form /gsd:<name> is legacy but is what
+   all GSD docs/workflow prose print.
+
+================================================================
+## 1. FRONTMATTER DUMP (name / description / argument-hint / effort)
+    $P/commands/gsd/*.md   [allowed-tools + requires elided; see section 5]
+================================================================
+--- add-tests
+    description: Generate tests for a completed phase based on UAT criteria and implementation
+    argument-hint: "<phase> [additional instructions]"
+--- ai-integration-phase
+    description: Generate an AI-SPEC.md design contract for phases that involve building AI systems.
+    argument-hint: "[phase number]"
+--- audit-fix
+    type: prompt
+    description: Autonomous audit-to-fix pipeline — find issues, classify, fix, test, commit
+    argument-hint: "--source <audit-uat> [--severity <medium|high|all>] [--max N] [--dry-run]"
+--- audit-milestone
+    description: Audit milestone completion against original intent before archiving
+    argument-hint: "[version]"
+--- audit-uat
+    description: Cross-phase audit of all outstanding UAT and verification items
+--- autonomous
+    description: Run all remaining phases autonomously — discuss→plan→execute per phase
+    argument-hint: "[--from N] [--to N] [--only N] [--interactive] [--converge]"
+    effort: max
+--- capture
+    description: Capture ideas, tasks, notes, and seeds to their destination
+    argument-hint: "[--note | --backlog | --seed | --list | --list-seeds] [text]"
+--- cleanup
+    description: Archive accumulated phase directories from completed milestones
+--- code-review
+    description: Review source files changed during a phase for bugs, security issues, and code quality problems
+    argument-hint: "<phase-number> [--depth=quick|standard|deep] [--files file1,file2,...] [--fix [--all] [--auto]] [reviewer-lane flags]"
+--- complete-milestone
+    type: prompt
+    description: Archive completed milestone and prepare for next version
+    argument-hint: <version>
+--- config
+    description: Configure GSD settings — workflow toggles, advanced knobs, integrations, and model profile
+    argument-hint: "[--advanced | --integrations | --profile <name>]"
+--- debug
+    description: Systematic debugging with persistent state across context resets
+    argument-hint: "[list | status <slug> | continue <slug> | --diagnose] [issue description]"
+--- discuss-phase
+    description: Gather phase context through adaptive questioning before planning.
+    argument-hint: "<phase> [--all] [--auto] [--chain] [--batch] [--analyze] [--text] [--power] [--assumptions]"
+--- docs-update
+    description: Generate or update project documentation verified against the codebase
+    argument-hint: "[--force] [--verify-only]"
+--- eval-review
+    description: Audit an executed AI phase's evaluation coverage and produce an EVAL-REVIEW.md remediation plan.
+    argument-hint: "[phase number]"
+--- execute-phase
+    description: SDD phase execution — execute all plans in a phase with dependency-aware wave parallelization
+    argument-hint: "<phase-number> [--wave N] [--gaps-only] [--interactive] [--tdd]"
+    effort: max
+--- explore
+    description: Socratic ideation and idea routing — think through ideas before committing to plans
+--- extract-learnings
+    description: Extract decisions, lessons, patterns, and surprises from completed phase artifacts
+    argument-hint: <phase-number>
+    type: prompt
+--- fast
+    description: Execute a trivial task inline — no subagents, no planning overhead
+    argument-hint: "[task description]"
+--- forensics
+    type: prompt
+    description: Post-mortem investigation for failed GSD workflows — diagnoses what went wrong.
+    argument-hint: "[problem description]"
+--- graphify
+    description: "Build, query, and inspect the project knowledge graph in .planning/graphs/"
+    argument-hint: "[build|query <term>|status|diff]"
+--- health
+    description: Diagnose planning directory health and optionally repair issues
+    argument-hint: "[--repair] [--context]"
+--- help
+    description: Show available GSD commands and usage guide
+    argument-hint: "[--brief | --full | <topic> | --brief <topic>]"
+--- import
+    description: Ingest external plans with conflict detection against project decisions before writing anything.
+    argument-hint: "--from <filepath> | --from-gsd2"
+--- inbox
+    description: Triage and review open GitHub issues and PRs against project templates and contribution guidelines.
+    argument-hint: "[--issues] [--prs] [--label] [--close-incomplete] [--repo owner/repo]"
+--- ingest-docs
+    description: Bootstrap or merge a .planning/ setup from existing ADRs, PRDs, SPECs, and docs in a repo.
+    argument-hint: "[path] [--mode new|merge] [--manifest <file>] [--resolve auto|interactive]"
+--- manager
+    description: Interactive command center for managing multiple phases from one terminal
+    argument-hint: "[--analyze-deps]"
+--- map-codebase
+    description: Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents
+    argument-hint: "[--fast [--focus tech|arch|quality|concerns]] [--query <term>|status|diff|refresh] [area]"
+--- mempalace-capture
+    description: "File a phase artifact into MemPalace; mirror decision facts into its temporal KG"
+    argument-hint: "[CONTEXT.md|PLAN.md|SUMMARY.md]"
+--- mempalace-recall
+    description: "Recall decisions, patterns, and surprises from MemPalace before planning"
+    argument-hint: "[phase-slug]"
+--- milestone-summary
+    type: prompt
+    description: Generate a comprehensive project summary from milestone artifacts for team onboarding and review
+    argument-hint: "[version]"
+--- mvp-phase
+    description: Plan a phase as a vertical MVP slice — user story, SPIDR splitting, then plan-phase
+    argument-hint: "<phase-number>"
+--- new-milestone
+    description: Start a new milestone cycle — update PROJECT.md and route to requirements
+    argument-hint: "[milestone name, e.g., 'v1.1 Notifications'] [--ws <name>] [--reset-phase-numbers]"
+--- new-project
+    description: Initialize a new project with deep context gathering and PROJECT.md
+    argument-hint: "[--auto]"
+--- next
+    description: Smart entry — detect project state and route to the right next GSD action.
+    effort: low
+--- ns-context
+    description: "codebase intel | map graphify docs learnings mempalace"
+    argument-hint: ""
+--- ns-ideate
+    description: "exploration capture | explore sketch spike spec capture"
+    argument-hint: ""
+--- ns-manage
+    description: "config workspace | workstreams thread update ship inbox"
+    argument-hint: ""
+--- ns-project
+    description: "project lifecycle | milestones audits summary"
+    argument-hint: ""
+--- ns-review
+    description: "quality gates | code review debug audit security eval ui"
+    argument-hint: ""
+--- ns-workflow
+    description: "workflow | discuss plan execute verify phase progress"
+    argument-hint: ""
+--- onboard
+    description: Guide existing codebase onboarding through mapping, doc ingest, and planning setup
+    argument-hint: "[--fast] [--text]"
+--- pause-work
+    description: Create context handoff when pausing work mid-phase
+    argument-hint: "[--report]"
+--- phase
+    description: Multi-phase management — add, insert, remove, or edit phases in ROADMAP.md (roadmap phase CRUD)
+    argument-hint: "[--insert | --remove | --edit] <phase-name-or-number>"
+--- plan-phase
+    description: Create detailed phase plan (PLAN.md) with verification loop
+    argument-hint: "[phase] [--auto] [--research] [--skip-research] [--research-phase <N>] [--view] [--gaps] [--skip-verify] [--skip-ui] [--prd <file>] [--ingest <path-or-glob>] [--ingest-format <auto|nygard|madr|narrative>] [--reviews] [--text] [--bounce] [--skip-bounce] [--chunked] [--tdd] [--mvp] [--granularity <coarse|standard|fine>] [--no-tracer] [--no-reversibility-gates]"
+    effort: max
+--- plan-review-convergence
+    description: "Cross-AI plan convergence - replan until review concerns are resolved."
+    argument-hint: "<phase> [--gemini] [--claude] [--codex] [--coderabbit] [--opencode] [--qwen] [--cursor] [--antigravity] [--agy] [--ollama] [--lm-studio] [--llama-cpp] [--kimi-code] [--text] [--ws <name>] [--all] [--max-cycles N]"
+--- pr-branch
+    description: Create a clean PR branch by filtering out .planning/ commits — ready for code review
+    argument-hint: "[target branch, default: main]"
+--- profile-user
+    description: Generate developer behavioral profile and create Claude-discoverable artifacts
+    argument-hint: "[--questionnaire] [--refresh]"
+--- progress
+    description: Check progress, advance workflow, or dispatch freeform intent — the unified GSD situational command
+    argument-hint: "[--forensic | --next [--auto] [--converge] | --do \"task description\"]"
+    effort: low
+--- quick-batch
+    description: Batch several /gsd:quick-shaped tasks together — planned, dispatched, and merged as one run
+    argument-hint: "[--file <path>] [--jobs auto|N] [--validate] [--research] [--resume <batch-id>] [task list]"
+--- quick
+    description: Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents
+    argument-hint: "[list | status <slug> | resume <slug> | --full] [--validate] [--discuss] [--research] [task description]"
+--- resume-work
+    description: Resume work from previous session with full context restoration
+--- review-backlog
+    description: Review and promote backlog items to active milestone
+--- review
+    description: Request cross-AI peer review of phase plans from external AI CLIs
+    argument-hint: "--phase N [--gemini] [--claude] [--codex] [--opencode] [--qwen] [--cursor] [--agy] [--all]"
+--- secure-phase
+    description: Retroactively verify threat mitigations for a completed phase
+    argument-hint: "[phase number]"
+--- settings
+    description: Configure GSD workflow toggles and model profile
+--- ship
+    description: Create PR, run review, and prepare for merge after verification passes
+    argument-hint: "[phase number or milestone, e.g., '4' or 'v1.0']"
+--- sketch
+    description: Sketch UI/design ideas with throwaway HTML mockups, or propose what to sketch next (frontier mode)
+    argument-hint: "[design idea to explore] [--quick] [--text] [--wrap-up] or [frontier]"
+--- spec-phase
+    description: Clarify WHAT a phase delivers with ambiguity scoring; produces a SPEC.md before discuss-phase.
+    argument-hint: "<phase> [--auto] [--text]"
+--- spike
+    description: Spike an idea through experiential exploration, or propose what to spike next (frontier mode)
+    argument-hint: "[idea to validate] [--quick] [--text] [--wrap-up] or [frontier]"
+--- stats
+    description: Display project statistics — phases, plans, requirements, git metrics, and timeline
+    effort: low
+--- surface
+    description: Toggle which skills are surfaced — apply a profile, list, or disable a cluster without reinstall
+    argument-hint: "[list|status|profile <name>|disable <cluster>|enable <cluster>|reset]"
+--- thread
+    description: Manage persistent context threads for cross-session work
+    argument-hint: "[list [--open | --resolved] | close <slug> | status <slug> | name | description]"
+--- ui-phase
+    description: Generate UI design contract (UI-SPEC.md) for frontend phases
+    argument-hint: "[phase]"
+--- ui-review
+    description: Retroactive 6-pillar visual audit of implemented frontend code
+    argument-hint: "[phase]"
+--- ultraplan-phase
+    description: "[BETA] Offload plan phase to Claude Code's ultraplan cloud; review in browser and import back."
+    argument-hint: "[phase-number]"
+--- undo
+    description: "Safe git revert. Roll back phase or plan commits using the phase manifest with dependency checks."
+    argument-hint: "--last N | --phase NN | --plan NN-MM"
+--- update
+    description: Update GSD to latest version with changelog display
+    argument-hint: "[--sync | --reapply | --next | --rc]"
+--- validate-phase
+    description: Retroactively audit and fill Nyquist validation gaps for a completed phase
+    argument-hint: "[phase number]"
+--- verify-work
+    description: Validate built features through conversational UAT
+    argument-hint: "[phase number, e.g., '4'] [--ws <name>]"
+--- workspace
+    description: Manage GSD workspaces — create, list, or remove isolated workspace environments
+    argument-hint: "[--new | --list | --remove] [name]"
+--- workstreams
+    description: Manage parallel workstreams — list, create, switch, status, progress, complete, and resume
+
+================================================================
+## 2. VERIFY-3 — single plan / single wave isolation
+================================================================
+
+--- 2a. commands/gsd/execute-phase.md (frontmatter + flag contract, verbatim) ---
+---
+name: gsd:execute-phase
+description: SDD phase execution — execute all plans in a phase with dependency-aware wave parallelization
+argument-hint: "<phase-number> [--wave N] [--gaps-only] [--interactive] [--tdd]"
+effort: max
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Glob
+  - Grep
+  - Bash
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+requires: [phase, verify-work]
+---
+<objective>
+Execute all plans in a phase using wave-based parallel execution.
+
+Orchestrator stays lean: discover plans, analyze dependencies, group into waves, spawn subagents, collect results. Each subagent loads the full execute-plan context and handles its own plan.
+
+Optional wave filter:
+- `--wave N` executes only Wave `N` for pacing, quota management, or staged rollout
+- phase verification/completion still only happens when no incomplete plans remain after the selected wave finishes
+
+Flag handling rule:
+- The optional flags documented below are available behaviors, not implied active behaviors
+- A flag is active only when its literal token appears in `$ARGUMENTS`
+- If a documented flag is absent from `$ARGUMENTS`, treat it as inactive
+
+Context budget: ~15% orchestrator, 100% fresh per subagent.
+</objective>
+
+<execution_context>
+@~/.claude/gsd-core/workflows/execute-phase.md
+@~/.claude/gsd-core/references/ui-brand.md
+</execution_context>
+
+<runtime_note>
+**Copilot (VS Code):** Use `vscode_askquestions` wherever this workflow calls `AskUserQuestion`. They are equivalent — `vscode_askquestions` is the VS Code Copilot implementation of the same interactive question API.
+</runtime_note>
+
+<context>
+Phase: $ARGUMENTS
+
+**Available optional flags (documentation only — not automatically active):**
+- `--wave N` — Execute only Wave `N` in the phase. Use when you want to pace execution or stay inside usage limits.
+- `--gaps-only` — Execute only gap closure plans (plans with `gap_closure: true` in frontmatter). Use after verify-work creates fix plans.
+- `--interactive` — Execute plans sequentially inline (no subagents) with user checkpoints between tasks. Lower token usage, pair-programming style. Best for small phases, bug fixes, and verification gaps.
+
+**Active flags must be derived from `$ARGUMENTS`:**
+- `--wave N` is active only if the literal `--wave` token is present in `$ARGUMENTS`
+- `--gaps-only` is active only if the literal `--gaps-only` token is present in `$ARGUMENTS`
+- `--interactive` is active only if the literal `--interactive` token is present in `$ARGUMENTS`
+- If none of these tokens appear, run the standard full-phase execution flow with no flag-specific filtering
+- Do not infer that a flag is active just because it is documented in this prompt
+
+Context files are resolved inside the workflow via `gsd-tools query init.execute-phase` and per-subagent `<required_reading>` blocks.
+</context>
+
+--- 2b. workflows/execute-phase.md : parse_args step (lines 74-82) ---
+
+- First positional token → `PHASE_ARG`
+- Optional `--wave N` → `WAVE_FILTER`
+- Optional `--gaps-only` keeps its current meaning
+- Optional `--cross-ai` → `CROSS_AI_FORCE=true` (force all plans through cross-AI execution)
+- Optional `--no-cross-ai` → `CROSS_AI_DISABLED=true` (disable cross-AI for this run, overrides config and frontmatter)
+
+If `--wave` is absent, preserve the current behavior of executing all incomplete waves in the phase.
+</step>
+
+--- 2c. workflows/execute-phase.md : --wave shell extraction (line 89) ---
+WAVE_PARAM=""; if [[ "$ARGUMENTS" =~ (^|[[:space:]])--wave[[:space:]]+([^[:space:]-][^[:space:]]*) ]]; then WAVE_PARAM="--wave ${BASH_REMATCH[2]}"; fi
+
+--- 2d. workflows/execute-phase.md : wave filter + safety check (lines 325-330) ---
+Parse JSON for: `phase`, `plans[]` (each with `id`, `wave`, `autonomous`, `objective`, `files_modified`, `task_count`, `has_summary`, `halted`, `blocked_by`), `waves` (map of wave number → plan IDs), `incomplete`, `runnable`, `has_checkpoints`.
+
+**Filtering:** Skip plans where `has_summary: true`. Additionally skip any plan whose `blocked_by` array is non-empty (#2830) — it depends, directly or transitively, on a plan that halted at a designed stop rather than completing — and report it by name: "Skipping {plan.id}: blocked by halted {blocked_by.join(', ')}". Never silently drop a blocked plan from the report; it must appear by name with its reason, not merely vanish from the executable list. This rule is additive to the `has_summary` skip, not a replacement for it. If `--gaps-only`: also skip non-gap_closure plans. If `WAVE_FILTER` is set: also skip plans whose `wave` does not equal `WAVE_FILTER`.
+
+**Wave safety check:** If `WAVE_FILTER` is set and there are still incomplete plans in any lower wave that match the current execution mode, STOP and tell the user to finish earlier waves first. Do not let Wave 2+ execute while prerequisite earlier-wave plans remain incomplete.
+
+
+--- 2e. workflows/execute-phase/steps/partial-wave.md (post-wave stop rule, launcher elided) ---
+<step name="handle_partial_wave_execution">
+If `WAVE_FILTER` was used, re-run plan discovery after execution:
+
+```bash
+POST_PLAN_INDEX=$(gsd_run query phase-plan-index "${PHASE_NUMBER}")
+```
+
+Apply the same "incomplete" filtering rules as earlier:
+- ignore plans with `has_summary: true`
+- if `--gaps-only`, only consider `gap_closure: true` plans
+
+**If incomplete plans still remain anywhere in the phase:**
+- STOP here
+- Do NOT run phase verification
+- Do NOT mark the phase complete in ROADMAP/STATE
+- Present:
+
+```markdown
+## Wave {WAVE_FILTER} Complete
+
+Selected wave finished successfully. This phase still has incomplete plans, so phase-level verification and completion were intentionally skipped.
+
+/gsd:execute-phase {phase} ${GSD_WS}                # Continue remaining waves
+/gsd:execute-phase {phase} --wave {next} ${GSD_WS}  # Run the next wave explicitly
+```
+
+**If no incomplete plans remain after the selected wave finishes:**
+- continue with the normal phase-level verification and completion flow below
+- this means the selected wave happened to be the last remaining work in the phase
+</step>
+
+--- 2f. gsd-core/bin/lib/init-command-router.cjs:93-102 (--wave arg parsing) ---
+                // `wave` is an optionalValueFlags entry, not a booleanFlags entry:
+                // `--wave N` is a documented, shipped form (commands/gsd/execute-phase.md:4,48)
+                // whose value is consumed by the workflow layer
+                // (gsd-core/workflows/execute-phase.md:84), not by this CLI seam — see
+                // NamedArgSpec.optionalValueFlags in command-arg-projection.cts.
+                const namedArgs = (0, command_arg_projection_cjs_1.parseNamedArgsOrExit)(norm.args, { booleanFlags: ['validate', 'tdd'], optionalValueFlags: ['wave'], positionals: 3 }, error);
+                init.cmdInitExecutePhase(cwd, norm.phase, raw, {
+                    validate: namedArgs['validate'],
+                    tdd: namedArgs['tdd'],
+                    wave: namedArgs['wave'],
+                });
+
+--- 2g. autonomous: --only is PHASE-level, not plan-level ---
+5:Drive milestone phases autonomously — all remaining phases, a range via `--from N`/`--to N`, or a single phase via `--only N`. For each incomplete phase: discuss → plan → execute using Skill() flat invocations. When `--converge` or `--cross-ai` is set, route the planning step through plan-review convergence before execution. Pauses only for explicit user decisions (grey area acceptance, blockers, validation requests). Re-reads ROADMAP.md after each phase to catch dynamically inserted phases.
+21:Parse `$ARGUMENTS` for `--from N`, `--to N`, `--only N`, `--interactive`, `--converge`/`--cross-ai`, reviewer selector flags, and `--max-cycles N`:
+60:When `--only` is set, also set `FROM_PHASE` to the same value so existing filter logic applies.
+153:**Apply `--from N`:** If set, filter out phases where `number < FROM_PHASE` (numeric compare; handles "5.1").
+155:**Apply `--to N`:** If set, filter out phases where `number > TO_PHASE` (numeric compare).
+157:**Apply `--only N`:** If set, filter out phases where `number != ONLY_PHASE`.
+645: Mode: Single phase (--only)
+647: Lifecycle skipped — run /gsd:autonomous without --only
+788: Resume with: /gsd:autonomous ${ONLY_PHASE ? "--only " + ONLY_PHASE : "--from " + next_phase}${TO_PHASE ? " --to " + TO_PHASE : ""}
+824:- [ ] `--only N` restricts execution to exactly one phase
+825:- [ ] `--only N` skips lifecycle step (audit/complete/cleanup)
+826:- [ ] `--only N` exits cleanly after single phase completes
+
+--- 2h. NO single-plan selector exists. Evidence: ---
+  * $P/commands/gsd/ has NO execute-plan.md (72 files, listed in section 1).
+  * workflows/execute-plan.md exists but is a SUBAGENT context document:
+      referenced only from PLAN.md <execution_context> and agents/gsd-executor.md.
+  * agents/gsd-executor.md:3 'Spawned by execute-phase orchestrator or execute-plan command.'
+      -> the 'execute-plan command' named there has no command/skill file in 1.14.0.
+  * grep for --plan across workflows/ returns only: undo.md (--plan NN-MM, git revert)
+      and execute-plan.md:451 (a gsd-tools --plan arg to a stats/verification call).
+  * closest plan-level selector: --gaps-only (frontmatter gap_closure: true filter).
+
+--- 2i. undo --plan (the ONLY plan-addressable CLI-ish verb; it is a WRITER) ---
+
+- `--last N` → MODE=last, COUNT=N (integer, default 10 if N missing)
+- `--phase NN` → MODE=phase, TARGET_PHASE=NN (two-digit phase number)
+- `--plan NN-MM` → MODE=plan, TARGET_PLAN=NN-MM (phase-plan ID)
+
+If no valid argument is provided, display usage and exit:
+
+```
+Usage: /gsd:undo --last N | --phase NN | --plan NN-MM
+
+Modes:
+  --last N      Show last N GSD commits for interactive selection
+  --phase NN    Revert all commits for phase NN
+  --plan NN-MM  Revert all commits for plan NN-MM
+
+Examples:
+  /gsd:undo --last 5
+  /gsd:undo --phase 03
+  /gsd:undo --plan 03-02
+```
+</step>
+
+================================================================
+## 3. PLAN vs WAVE MODEL
+================================================================
+
+--- 3a. templates/phase-prompt.md:6-8 (on-disk plan naming) ---
+Template for `.planning/phases/XX-name/{phase}-{plan}-PLAN.md` - executable phase plans optimized for parallel execution.
+
+**Naming:** Use `{phase}-{plan}-PLAN.md` format (e.g., `01-02-PLAN.md` for Phase 1, Plan 2)
+
+--- 3b. templates/phase-prompt.md:12-36 (plan frontmatter incl. wave/depends_on) ---
+## File Template
+
+```markdown
+---
+phase: XX-name
+plan: NN
+type: execute
+wave: N                     # Execution wave (1, 2, 3...). Pre-computed at plan time.
+depends_on: []              # Plan IDs this plan requires (e.g., ["01-01"]).
+files_modified: []          # Files this plan modifies.
+files_deleted: []           # OPTIONAL. Files this plan REMOVES. Declaring a path here is what
+                            # lets worktree cleanup-wave merge the branch that deletes it; an
+                            # undeclared deletion still blocks. Exact paths, not globs or dirs.
+coupling_justified: []      # OPTIONAL. Deliberate, order-independent same-wave couplings: one
+                            # "plan-id: reason" string per coupled peer, e.g.
+                            # ["03-02: both append independent config keys"]. Exempts the pair
+                            # from the plan-checker's Dimension 3b advisory (#3724).
+autonomous: true            # false if plan has checkpoints requiring user interaction
+requirements: []            # REQUIRED — Requirement IDs from ROADMAP this plan addresses. MUST NOT be empty.
+user_setup: []              # Human-required setup Claude cannot automate (see below)
+
+# Goal-backward verification (derived during planning, verified after execution)
+must_haves:
+  truths: []                # Observable behaviors that must be true for goal achievement
+  artifacts: []             # Files that must exist with real implementation
+
+--- 3c. bin/lib/plan-scan.cjs: canonical plan/summary filenames ---
+    if (PLAN_REVIEW_RE.test(fileName))
+        return false;
+    if (fileName.endsWith('-PLAN.md') || fileName === 'PLAN.md')
+        return true;
+    // A summary is never a plan. Reject summaries before the loose /PLAN/i
+ * Strict canonical-naming predicate over a `scanPhasePlans` `planFiles`/
+ * `allPlanFiles` ENTRY (root form bare, nested form `plans/`-prefixed, exactly
+ * as those arrays store them) — root `<phase>-<NN>-PLAN.md`/bare `PLAN.md`,
+ * or nested `plans/PLAN-<NN>....md`/`plans/<x>-PLAN-<NN>....md` — WITHOUT
+ * `isRootPlanFile`'s loose delimited-PLAN fallback.
+    if (fileEntry.startsWith('plans/'))
+        return isNestedPlanFile(fileEntry.slice('plans/'.length));
+    return fileEntry.endsWith('-PLAN.md') || fileEntry === 'PLAN.md';
+}
+
+--- 3d. bin/lib/phase.cjs cmdPhasePlanIndex: wave = topological DAG level, not frontmatter ---
+    }
+    // ── Pass 2: topological level assignment via depends_on DAG ──────────────
+    const seenLower = new Map();
+    for (const p of rawPlans) {
+    // ── Pass 3: determine lowest bucket key and build output ─────────────────
+    const anyWaveZero = rawPlans.some((p) => p.declaredWave === 0);
+    const levelOffset = anyWaveZero ? 0 : 1;
+    const plans = [];
+    const waves = {};
+    const incomplete = [];
+    const runnable = [];
+    let hasCheckpoints = false;
+    const warnings = [];
+    // #3427 / ADR-3473 §8.5: name every dropped depends_on edge (plan AND
+    computedWave = (level.get(plan.id) ?? 0) + levelOffset;   levelOffset = anyWaveZero ? 0 : 1
+    -> declared 'wave:' frontmatter is ADVISORY (mismatch => warning); the AUTHORITATIVE wave is
+       DERIVED from the depends_on DAG via Kahn's-algorithm levels (computeDependencyLevels).
+    -> also emits: plans[], waves{waveNo:[planIds]}, incomplete[], runnable[], blocked_by[], has_checkpoints
+
+--- 3e. workflows/execute-phase.md:319-330 (plan inventory + wave filter + safety check) ---
+Load plan inventory with wave grouping in one call:
+
+```bash
+PLAN_INDEX=$(gsd_run query phase-plan-index "${PHASE_NUMBER}")
+```
+
+Parse JSON for: `phase`, `plans[]` (each with `id`, `wave`, `autonomous`, `objective`, `files_modified`, `task_count`, `has_summary`, `halted`, `blocked_by`), `waves` (map of wave number → plan IDs), `incomplete`, `runnable`, `has_checkpoints`.
+
+**Filtering:** Skip plans where `has_summary: true`. Additionally skip any plan whose `blocked_by` array is non-empty (#2830) — it depends, directly or transitively, on a plan that halted at a designed stop rather than completing — and report it by name: "Skipping {plan.id}: blocked by halted {blocked_by.join(', ')}". Never silently drop a blocked plan from the report; it must appear by name with its reason, not merely vanish from the executable list. This rule is additive to the `has_summary` skip, not a replacement for it. If `--gaps-only`: also skip non-gap_closure plans. If `WAVE_FILTER` is set: also skip plans whose `wave` does not equal `WAVE_FILTER`.
+
+**Wave safety check:** If `WAVE_FILTER` is set and there are still incomplete plans in any lower wave that match the current execution mode, STOP and tell the user to finish earlier waves first. Do not let Wave 2+ execute while prerequisite earlier-wave plans remain incomplete.
+
+
+--- 3f. workflows/execute-phase.md:406-407, 509-513, 531-537 (parallel dispatch + overlap guard) ---
+<step name="execute_waves">
+Execute each selected wave in sequence. Within a wave: parallel if `PARALLELIZATION=true`, sequential if `false`.
+1. **Intra-wave files_modified overlap check (BEFORE spawning):**
+
+   Before spawning any agents for this wave, inspect the `files_modified` list of all plans
+   in the wave. Check every pair of plans in the wave — if any two plans share even one file
+   in their `files_modified` lists, those plans have an implicit dependency and MUST NOT run
+     ⚠ Intra-wave files_modified overlap detected in Wave {N}:
+       Plan {A} and Plan {B} both modify {file}
+       Running these plans sequentially to avoid parallel worktree conflicts.
+     ```
+   - Override `PARALLELIZATION` to `false` for this wave only — run all plans in the wave
+     sequentially regardless of the global parallelization setting.
+   - This is a safety net for plans that were incorrectly assigned to the same wave.
+
+--- 3g. workflows/execute-phase.md:621-634 (sequential dispatch of parallel agents) ---
+   **Sequential dispatch for parallel execution (waves with 2+ agents):**
+   Dispatch each `Agent()` call **one at a time with `run_in_background: true`**. Do NOT
+   send all Agent calls in a single message: simultaneous `git worktree add` calls race
+   on `.git/config.lock`. Agents still run in parallel once their worktrees are created.
+
+   ```text
+   # CORRECT: one Agent() per message with run_in_background: true
+   # WRONG: multiple Agent() calls in one message -> .git/config.lock contention
+   ```
+
+   ```text
+   Agent(
+    subagent_type="{EXECUTOR_TYPE}",
+    description="Execute plan {plan_number} of phase {phase_number}",
+
+--- 3h. loop-host hook points (workflows/execute-phase.md:1-7) ---
+<!-- gsd:loop-host
+step: execute
+points: execute:pre, execute:wave:pre, execute:wave:post, execute:post
+agent-roles: executor, verifier
+produces: SUMMARY.md
+consumes: PLAN.md
+-->
+
+--- 3i. config knobs affecting wave parallelism (gsd-tools state -> config) ---
+    parallelization: true       # false => plans within a wave run sequentially
+    workflow.use_worktrees      # false => ISOLATION forced to 'none', sequential on main tree
+    subagent_timeout, context_window, executor.stall_* 
+
+================================================================
+## 4. WORKSPACE WORKTREE STRATEGY (workflows/new-workspace.md)
+================================================================
+21:Parse JSON for: `default_workspace_base`, `child_repos`, `child_repo_count`, `worktree_available`, `is_git_repo`, `cwd_repo_name`, `project_root`, `response_language`.
+31:- `--strategy` → `STRATEGY` (defaults to `worktree`)
+96:**If `--strategy` is provided:** Use it (validate: must be `worktree` or `clone`).
+98:**If `--strategy` is NOT provided and not `--auto`:**
+104:  - "Worktree (recommended) — lightweight, shares .git objects with source repo" → `worktree`
+105:  - "Clone — fully independent copy, no connection to source repo" → `clone`
+130:3. **Worktree availability** — if strategy is `worktree` and `worktree_available` is false:
+132:Error: git is not available. Install git or use --strategy clone.
+145:**Worktree strategy:**
+159:**Clone strategy:**
+
+================================================================
+## 5. WRITE vs READ-ONLY (allowed-tools contains Write or Edit)
+================================================================
+WRITE-CAPABLE via tools:
+  add-tests   ai-integration-phase   audit-fix   audit-milestone   autonomous   capture   cleanup   code-review   complete-milestone   config   debug   discuss-phase   docs-update   eval-review   execute-phase   explore   extract-learnings   fast   forensics   health   import   inbox   ingest-docs   manager   map-codebase   mempalace-recall   milestone-summary   mvp-phase   new-milestone   new-project   onboard   pause-work   phase   plan-phase   plan-review-convergence   profile-user   quick-batch   quick   resume-work   review-backlog   review   secure-phase   settings   ship   sketch   spec-phase   spike   surface   thread   ui-phase   ui-review   update   validate-phase   verify-work   workspace
+
+NO Write/Edit tool declared:
+  audit-uat   graphify   help   mempalace-capture   next   ns-context   ns-ideate   ns-manage   ns-project   ns-review   ns-workflow   pr-branch   progress   stats   ultraplan-phase   undo   workstreams
+
+CAVEATS (tool list understates side effects):
+  undo        — no Write/Edit but runs 'git revert' via Bash. DESTRUCTIVE.
+  pr-branch   — no Write/Edit but creates branches / rewrites history via Bash. WRITES git.
+  graphify    — 'build' subcommand writes .planning/graphs/ via Bash.
+  mempalace-capture — writes into MemPalace via Bash.
+  next, progress, ns-* — read-only themselves but DISPATCH other commands via SlashCommand/Skill.
+  audit-uat, help, stats, workstreams — genuinely read-only.
+  ultraplan-phase — read-only locally (offloads to cloud; import comes back via /gsd:import).
+
+================================================================
+## 6. gsd-tools READ-ONLY-ish SUBCOMMAND FAMILIES PROBED
+================================================================
+phase            -> uat-passed, next-decimal, add, add-batch, insert, remove, complete, list-plans
+phase-plan-index -> <phase>  (read-only; emits plans/waves/incomplete/runnable/blocked_by)
+state            -> read-only JSON dump of config + state
+workstream       -> create, list, status, complete, set, get, progress
+worktree         -> cleanup-wave, record-agent, reap-orphans, base-check, set-baseref, create
+loop             -> render-hooks <point>
+task             -> is-behavior-adding, resolve-content --plan <path> --task-id <id>
+NONE of these selects/executes a single plan or wave. 'task resolve-content' addresses a single
+TASK inside a plan but only resolves its CONTENT (tracker seam), it does not execute it.
+
+END OF CAPTURE

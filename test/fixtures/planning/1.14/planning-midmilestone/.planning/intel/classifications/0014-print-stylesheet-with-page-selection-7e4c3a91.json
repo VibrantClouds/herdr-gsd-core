@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0014-print-stylesheet-with-page-selection.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0014: Print uses a browser print stylesheet with a page selector shared with the share dialog",
+  "summary": "Browser-based printing via print stylesheet with view mode switching and reusable section selector component for print/share dialogs.",
+  "scope": ["printing", "browser print", "print stylesheet", "page selection", "view mode", "section selector", "share dialog"],
+  "cross_refs": ["SPEC-frontend-architecture.md", "SPEC-design-system.md"],
+  "locked": true,
+  "precedence": null
+}

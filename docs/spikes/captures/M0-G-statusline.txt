@@ -1,0 +1,675 @@
+M0-G-statusline capture — GSD-Core 1.14.0 (VERIFY-4 / VERIFY-5)
+captured: 2026-09-15T22:27:29-04:00
+package root $P = /home/vibrantclouds/.npm/_npx/a78857a30883db8e/node_modules/@opengsd/gsd-core
+
+############ 1. gsd-statusline.js — the ONLY write it makes (bridge file) ############
+804	      // Write context metrics to bridge file for the context-monitor PostToolUse hook.
+805	      // The monitor reads this file to inject agent-facing warnings when context is low.
+806	      // Reject session IDs with path separators or traversal sequences to prevent
+807	      // a malicious session_id from writing files outside the temp directory.
+808	      const sessionSafe = session && !/[/\\]|\.\./.test(session);
+809	      if (sessionSafe) {
+810	        try {
+811	          const bridgePath = path.join(os.tmpdir(), `claude-ctx-${session}.json`);
+812	          // used_pct written to the bridge must match CC's native /context reporting:
+813	          // raw used = 100 - remaining_percentage (no buffer normalization applied).
+814	          // The normalized `used` value is correct for the statusline progress bar but
+815	          // inflates the context monitor warning messages by ~13 points (#2451).
+816	          const rawUsedPct = Math.round(100 - remaining);
+817	          const bridgeData = JSON.stringify({
+818	            session_id: session,
+819	            remaining_percentage: remaining,
+820	            used_pct: rawUsedPct,
+821	            timestamp: Math.floor(Date.now() / 1000)
+822	          });
+823	          fs.writeFileSync(bridgePath, bridgeData);
+824	        } catch (e) {
+825	          // Silent fail -- bridge is best-effort, don't break statusline
+826	        }
+827	      }
+828	
+-- only fd-level ops in the whole 1085-line file:
+116:    const fd = fs.openSync(transcriptPath, 'r');
+823:          fs.writeFileSync(bridgePath, bridgeData);
+
+-- statusline config resolver (752-763):
+752	function resolveStatuslineOptions(cfg) {
+753	  const showLastCommand = getConfigValue(cfg, 'statusline.show_last_command') === true;
+754	  const cfgPos = getConfigValue(cfg, 'statusline.context_position');
+755	  // Clamp any non-'front' value (including absent/null) to 'end' — the single
+756	  // source of truth for this default; composeStatusline's own coercion stays
+757	  // as belt-and-suspenders defense for direct callers.
+758	  const position = cfgPos === 'front' ? 'front' : 'end';
+759	  const stateFormat = getConfigValue(cfg, 'statusline.state_format') === 'compact' ? 'compact' : 'full';
+760	  const showGit = getConfigValue(cfg, 'statusline.show_git') === true;
+761	  const showStateFreshness = getConfigValue(cfg, 'statusline.show_state_freshness') === true;
+762	  return { showLastCommand, position, stateFormat, showGit, showStateFreshness };
+763	}
+-- token-suffix key (833-837):
+833	      // Opt-in absolute token count after the percentage (statusline.show_context_tokens)
+834	      let tokenSuffix = '';
+835	      if (getConfigValue(cfg, 'statusline.show_context_tokens') === true) {
+836	        tokenSuffix = contextTokenSuffix(data.context_window?.current_usage);
+837	      }
+-- read-only lookups: CLAUDE_CONFIG_DIR/todos + ~/.cache/gsd update cache (853-895):
+853	    const homeDir = os.homedir();
+854	    // Respect CLAUDE_CONFIG_DIR for custom config directory setups (#870)
+855	    const claudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(homeDir, '.claude');
+856	    const todosDir = path.join(claudeDir, 'todos');
+890	    let gsdUpdate = '';
+891	    const cacheFile = path.join(homeDir, '.cache', 'gsd', updateCacheFileName);
+892	    if (fs.existsSync(cacheFile)) {
+
+-- statusline.* keys across package (count key):
+     25 statusline.js
+      9 statusline.state_format
+      8 statusline.show_git
+      8 statusline.show_context_tokens
+      5 statusline.show_state_freshness
+      5 statusline.show_last_command
+      5 statusline.context_position
+      4 statusline.test
+-- validators, $P/gsd-core/bin/lib/config.cjs:
+880:    if (kp === 'statusline.context_position')
+881:        assertEnumValue(parsedValue, val, VALID_CONTEXT_POSITIONS, 'statusline.context_position');
+882:    // statusline.show_context_tokens — boolean only
+883:    if (kp === 'statusline.show_context_tokens') {
+885:            error(`Invalid statusline.show_context_tokens '${val}'. Must be a boolean (true or false).`);
+890:    if (kp === 'statusline.state_format')
+891:        assertEnumValue(parsedValue, val, VALID_STATE_FORMATS, 'statusline.state_format');
+892:    // statusline.show_git — boolean only
+893:    if (kp === 'statusline.show_git') {
+895:            error(`Invalid statusline.show_git '${val}'. Must be a boolean (true or false).`);
+
+############ 2. gsd-context-monitor.js ############
+-- header (1-23) + thresholds (36-39):
+1	#!/usr/bin/env node
+2	// gsd-hook-version: {{GSD_VERSION}}
+3	// Context Monitor - PostToolUse/AfterTool hook (Gemini uses AfterTool)
+4	// Reads context metrics from the statusline bridge file and injects
+5	// warnings when context usage is high. This makes the AGENT aware of
+6	// context limits (the statusline only shows the user).
+7	//
+8	// How it works:
+9	// 1. The statusline hook writes metrics to /tmp/claude-ctx-{session_id}.json
+10	// 2. This hook reads those metrics after each tool use
+11	// 3. When remaining context drops below thresholds, it injects a warning
+12	//    as additionalContext, which the agent sees in its conversation
+13	//
+14	// Thresholds:
+15	//   WARNING  (remaining <= 35%): Agent should wrap up current task
+16	//   CRITICAL (remaining <= 25%): Agent should stop immediately and save state
+17	// Both fire-points are overridable per project via .planning/config.json
+18	// (hooks.context_warning_threshold / hooks.context_critical_threshold, #4285);
+19	// the values above are the defaults used when the keys are absent or unusable.
+20	//
+21	// Debounce: 5 tool uses between warnings to avoid spam
+22	// Severity escalation bypasses debounce (WARNING -> CRITICAL fires immediately)
+23	
+36	const WARNING_THRESHOLD = 35;  // remaining_percentage <= 35% (default, see resolveThresholds)
+37	const CRITICAL_THRESHOLD = 25; // remaining_percentage <= 25% (default, see resolveThresholds)
+38	const STALE_SECONDS = 60;      // ignore metrics older than 60s
+39	const DEBOUNCE_CALLS = 5;      // min tool uses between warnings
+-- session-id sanitation + the 3 tmp paths (213-229):
+213	    const sessionId = data.session_id;
+214	
+215	    if (!sessionId) {
+216	      allow(undefined);
+217	    }
+218	
+219	    // Reject session IDs that contain path traversal sequences or path separators.
+220	    // session_id is used to construct file paths in /tmp — an unsanitized value
+221	    // could escape the temp directory and read or write arbitrary files.
+222	    if (/[/\\]|\.\./.test(sessionId)) {
+223	      allow(undefined);
+224	    }
+225	
+226	    const tmpDir = os.tmpdir();
+227	    const warnPath = path.join(tmpDir, `claude-ctx-${sessionId}-warned.json`);
+228	    const metricsPath = path.join(tmpDir, `claude-ctx-${sessionId}.json`);
+229	    const watermarkPath = path.join(tmpDir, `claude-ctx-${sessionId}-compacted.json`);
+-- PreCompact reset + watermark write (238-301, comments elided):
+        if (readEventName(data) === 'PreCompact') {
+          for (const stale of [warnPath, metricsPath]) {
+            try {
+              fs.unlinkSync(stale);
+            } catch (e) {
+              if (e && e.code === 'ENOENT') continue;   // already absent — that IS the reset
+              try {
+                if (fs.lstatSync(stale).isFile()) {
+                  fs.closeSync(fs.openSync(
+                    stale,
+                    fs.constants.O_WRONLY | fs.constants.O_TRUNC | (fs.constants.O_NOFOLLOW || 0)
+                  ));
+                }
+              } catch (e2) { /* give up, never throw */ }
+            }
+          }
+    
+          writeSentinel(watermarkPath, JSON.stringify({ at: Math.floor(Date.now() / 1000) }));
+          allow(undefined);
+-- readSentinel/writeSentinel (157-202, comments elided):
+    [body elided — see $P/hooks/gsd-context-monitor.js:157-202] readSentinel(): lstatSync must be a regular file & <=4096B, openSync O_RDONLY|O_NOFOLLOW, short-read refused.
+    writeSentinel(): unlinkSync then openSync O_WRONLY|O_CREAT|O_EXCL, looped writeSync; all failures swallowed. NOT tmp+rename, NOT atomic across readers.
+-- config gate + metrics read (308-346, comments elided):
+        const cwd = data.cwd || process.cwd();
+        let thresholds = { warning: WARNING_THRESHOLD, critical: CRITICAL_THRESHOLD };
+        try {
+          const configPath = path.join(cwd, '.planning', 'config.json');
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (config.hooks?.context_warnings === false) {
+            allow(undefined);
+          }
+          thresholds = resolveThresholds(config.hooks);
+        } catch (e) {
+        }
+    
+        let metricsRaw;
+        try {
+          metricsRaw = readSentinel(metricsPath);
+        } catch (e) {
+          if (e && e.code === 'ENOENT') allow(undefined);
+          throw e;
+        }
+        const metrics = JSON.parse(metricsRaw);
+-- watermark gate + staleness + thresholds + debounce (376-450, comments elided):
+        try {
+          const watermark = JSON.parse(readSentinel(watermarkPath));
+          if (
+            watermark && typeof watermark.at === 'number'
+            && watermark.at <= now + WATERMARK_SKEW_SECONDS
+            && !(metrics.timestamp > watermark.at + COMPACT_GRACE_SECONDS)
+          ) {
+            allow(undefined);
+          }
+        } catch (e) { /* no watermark — nothing to compare against */ }
+    
+        if (metrics.timestamp && (now - metrics.timestamp) > STALE_SECONDS) {
+          allow(undefined);
+        }
+    
+        const remaining = metrics.remaining_percentage;
+        const usedPct = metrics.used_pct;
+    
+        if (remaining > thresholds.warning) {
+          allow(undefined);
+        }
+    
+        let warnData = { callsSinceWarn: 0, lastLevel: null };
+        let firstWarn = true;
+    
+        try {
+          warnData = JSON.parse(readSentinel(warnPath));
+          firstWarn = false;
+        } catch (e) {
+        }
+    
+        warnData.callsSinceWarn = (warnData.callsSinceWarn || 0) + 1;
+    
+        const isCritical = remaining <= thresholds.critical;
+        const currentLevel = isCritical ? 'critical' : 'warning';
+    
+        const severityEscalated = currentLevel === 'critical' && warnData.lastLevel === 'warning';
+        if (!firstWarn && warnData.callsSinceWarn < DEBOUNCE_CALLS && !severityEscalated) {
+          writeSentinel(warnPath, JSON.stringify(warnData));
+          allow(undefined);
+        }
+    
+        warnData.callsSinceWarn = 0;
+        warnData.lastLevel = currentLevel;
+        writeSentinel(warnPath, JSON.stringify(warnData));
+-- CRITICAL breadcrumb: spawns 'gsd-tools.cjs state record-session' -> writes .planning/STATE.md (452-479):
+452	    // Detect if GSD is active (has .planning/STATE.md in working directory)
+453	    const isGsdActive = fs.existsSync(path.join(cwd, '.planning', 'STATE.md'));
+454	
+455	    // On CRITICAL with active GSD project, auto-record session state as a
+456	    // breadcrumb for /gsd:resume-work (#1974). Fire-and-forget subprocess —
+457	    // doesn't block the hook or the agent. Fires ONCE per CRITICAL session,
+458	    // guarded by warnData.criticalRecorded to prevent repeated overwrites
+459	    // of the "crash moment" record on every debounce cycle.
+460	    if (isCritical && isGsdActive && !warnData.criticalRecorded) {
+461	      try {
+462	        // Runtime-agnostic path: this hook lives at <runtime-config>/hooks/
+463	        // and gsd-tools.cjs lives at <runtime-config>/gsd-core/bin/.
+464	        // Using __dirname makes this work on Claude Code, OpenCode, Gemini,
+465	        // Kilo, etc. without hardcoding ~/.claude/.
+466	        const gsdTools = path.join(__dirname, '..', 'gsd-core', 'bin', 'gsd-tools.cjs');
+467	        // Coerce usedPct to a safe number in case bridge file is malformed
+468	        const safeUsedPct = Number(usedPct) || 0;
+469	        const stoppedAt = `context exhaustion at ${safeUsedPct}% (${new Date().toISOString().split('T')[0]})`;
+470	        spawn(
+471	          process.execPath,
+472	          [gsdTools, 'state', 'record-session', '--stopped-at', stoppedAt],
+473	          { cwd, detached: true, stdio: 'ignore', windowsHide: true }
+474	        ).unref();
+475	        warnData.criticalRecorded = true;
+476	        // Persist the sentinel so subsequent debounce cycles don't re-fire
+477	        writeSentinel(warnPath, JSON.stringify(warnData));
+478	      } catch { /* non-critical — don't let state recording break the hook */ }
+479	    }
+-- output envelope only for PostToolUse/AfterTool (514-530):
+        const eventName = readEventName(data);
+        const geminiFallback = eventName === "" && !!process.env.GEMINI_API_KEY;
+        const injectionSupported = eventName === "PostToolUse" || eventName === "AfterTool" || geminiFallback;
+    
+        if (injectionSupported) {
+          const output = {
+            hookSpecificOutput: {
+              hookEventName: eventName || "AfterTool",
+              additionalContext: message,
+              severity: currentLevel
+            }
+          };
+          process.stdout.write(JSON.stringify(output));
+        }
+############ 3. gsd-session-state.sh (FULL) ############
+     1	#!/usr/bin/env bash
+     2	# gsd-hook-version: {{GSD_VERSION}}
+     3	# gsd-session-state.sh — SessionStart hook: inject project state reminder
+     4	# Outputs STATE.md head on every session start for orientation.
+     5	#
+     6	# OPT-IN: This hook is a no-op unless config.json has hooks.community: true.
+     7	# Enable with: "hooks": { "community": true } in .planning/config.json
+     8	set -euo pipefail
+     9	
+    10	# Check opt-in config — exit silently if not enabled
+    11	if [ -f .planning/config.json ]; then
+    12	  ENABLED=$(node -e "try{const c=require('./.planning/config.json');process.stdout.write(c.hooks?.community===true?'1':'0')}catch{process.stdout.write('0')}" 2>/dev/null)
+    13	  if [ "$ENABLED" != "1" ]; then exit 0; fi
+    14	else
+    15	  exit 0
+    16	fi
+    17	
+    18	# Build the additionalContext text and emit it as a structured JSON
+    19	# envelope per the Claude Code SessionStart hook protocol (#2974). Tests
+    20	# parse the JSON and assert on typed fields (state_present: bool,
+    21	# config_mode: string, etc) rather than substring-matching free-form text.
+    22	STATE_PRESENT="false"
+    23	STATE_HEAD=""
+    24	if [ -f .planning/STATE.md ]; then
+    25	  STATE_PRESENT="true"
+    26	  STATE_HEAD=$(head -20 .planning/STATE.md)
+    27	fi
+    28	
+    29	CONFIG_MODE="unknown"
+    30	if [ -f .planning/config.json ]; then
+    31	  CONFIG_MODE=$(node -e "try{const c=require('./.planning/config.json');process.stdout.write(String(c.mode||'unknown'))}catch{process.stdout.write('unknown')}" 2>/dev/null)
+    32	fi
+    33	
+    34	# Use Node for JSON encoding so embedded newlines/quotes are escaped correctly.
+    35	# additionalContext is the text Claude Code injects at session start; the
+    36	# typed fields (state_present, config_mode) let tests assert on the
+    37	# structured contract without grepping the prose.
+    38	node -e '
+    39	  const [statePresent, stateHead, configMode] = process.argv.slice(1);
+    40	  const headerLines = ["## Project State Reminder", ""];
+    41	  if (statePresent === "true") {
+    42	    headerLines.push("STATE.md exists - check for blockers and current phase.");
+    43	    if (stateHead) headerLines.push(stateHead);
+    44	  } else {
+    45	    headerLines.push("No .planning/ found - suggest /gsd-new-project if starting new work.");
+    46	  }
+    47	  headerLines.push("");
+    48	  headerLines.push("Config: \"mode\": \"" + configMode + "\"");
+    49	  const additionalContext = headerLines.join("\n");
+    50	  process.stdout.write(JSON.stringify({
+    51	    hookSpecificOutput: {
+    52	      hookEventName: "SessionStart",
+    53	      additionalContext,
+    54	      state_present: statePresent === "true",
+    55	      config_mode: configMode,
+    56	    },
+    57	  }));
+    58	' "$STATE_PRESENT" "$STATE_HEAD" "$CONFIG_MODE"
+    59	
+    60	exit 0
+
+############ 4. gsd-phase-boundary.sh (FULL) ############
+     1	#!/usr/bin/env bash
+     2	# gsd-hook-version: {{GSD_VERSION}}
+     3	# gsd-phase-boundary.sh — PostToolUse hook: detect .planning/ file writes
+     4	# Outputs a reminder when planning files are modified outside normal workflow.
+     5	# Uses Node.js for JSON parsing (always available in GSD projects, no jq dependency).
+     6	#
+     7	# OPT-IN: This hook is a no-op unless config.json has hooks.community: true.
+     8	# Enable with: "hooks": { "community": true } in .planning/config.json
+     9	set -euo pipefail
+    10	
+    11	# Check opt-in config — exit silently if not enabled
+    12	if [ -f .planning/config.json ]; then
+    13	  ENABLED=$(node -e "try{const c=require('./.planning/config.json');process.stdout.write(c.hooks?.community===true?'1':'0')}catch{process.stdout.write('0')}" 2>/dev/null)
+    14	  if [ "$ENABLED" != "1" ]; then exit 0; fi
+    15	else
+    16	  exit 0
+    17	fi
+    18	
+    19	INPUT=$(cat)
+    20	
+    21	# Extract file_path from JSON using Node (handles escaping correctly).
+    22	# #2304: Kimi CLI registers this hook with matcher 'WriteFile|StrReplaceFile'
+    23	# and its file tools name the field `path`, not `file_path` (kimi-cli
+    24	# src/kimi_cli/tools/file/write.py + replace.py) — fall back to tool_input.path
+    25	# when file_path is absent, mirroring normalizeKimiPayload in the JS guards.
+    26	# #2752: `path` is AUTHORITATIVE (kimi-cli executes on it; it sends `path` only,
+    27	# never `file_path`). `file_path` is model-controlled on Kimi, so consulting it
+    28	# first let a model-supplied decoy suppress/fabricate the reminder. `path` wins,
+    29	# `file_path` is the fallback (Claude Code emits `file_path` and no `path`, so the
+    30	# fallback must remain). The JS guards reach the same "path authoritative" outcome
+    31	# via an upstream normalizeKimiPayload step (copies path→file_path before any guard
+    32	# reads); this shell hook parses tool_input once, raw, so it applies the precedence
+    33	# directly at the read site.
+    34	FILE=$(echo "$INPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d).tool_input||{};process.stdout.write((typeof i.path==='string'&&i.path)||(typeof i.file_path==='string'&&i.file_path)||'')}catch{}})" 2>/dev/null)
+    35	
+    36	# Emit a structured JSON envelope (#2974). additionalContext carries the
+    37	# user-visible reminder text; the typed `planning_modified` boolean and
+    38	# `file_path` let tests assert on the structured contract without grepping.
+    39	PLANNING_MODIFIED="false"
+    40	if [[ "$FILE" == *.planning/* ]] || [[ "$FILE" == .planning/* ]]; then
+    41	  PLANNING_MODIFIED="true"
+    42	fi
+    43	
+    44	if [ "$PLANNING_MODIFIED" = "true" ]; then
+    45	  node -e '
+    46	    const file = process.argv[1];
+    47	    const additionalContext = ".planning/ file modified: " + file + "\n" +
+    48	      "Check: Should STATE.md be updated to reflect this change?";
+    49	    process.stdout.write(JSON.stringify({
+    50	      hookSpecificOutput: {
+    51	        hookEventName: "PostToolUse",
+    52	        additionalContext,
+    53	        planning_modified: true,
+    54	        file_path: file,
+    55	      },
+    56	    }));
+    57	  ' "$FILE"
+    58	fi
+    59	
+    60	exit 0
+
+############ 5. wiring ############
+-- $P/hooks/hooks.json (plugin manifest: statusline/phase-boundary/session-state ABSENT):
+3:    "SessionStart": [
+6:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-ensure-canonical-path.js\"", "timeout": 5 },
+7:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-check-update.js\"" }
+11:    "PreToolUse": [
+13:        "matcher": "Write|Edit",
+15:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-prompt-guard.js\"", "timeout": 5 },
+16:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-read-guard.js\"", "timeout": 5 }
+20:        "matcher": "Write|Edit|MultiEdit",
+22:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-worktree-path-guard.js\"", "timeout": 5 }
+26:        "matcher": "Write",
+28:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-write-guard.js\"", "timeout": 5 }
+32:        "matcher": "Read|Grep|Bash",
+34:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-secret-read-guard.js\"", "timeout": 5 }
+38:        "matcher": "Agent|Task",
+40:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-agent-isolation-guard.js\"", "timeout": 5 }
+44:    "PostToolUse": [
+46:        "matcher": "Bash|Edit|Write|MultiEdit|Agent|Task",
+48:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-context-monitor.js\"", "timeout": 10 }
+52:        "matcher": "Read|WebFetch|WebSearch",
+54:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-read-injection-scanner.js\"", "timeout": 5 }
+58:    "SubagentStop": [
+61:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-context-monitor.js\"", "timeout": 10 }
+65:    "Stop": [
+68:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-context-monitor.js\"", "timeout": 10 }
+72:    "PreCompact": [
+75:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-context-monitor.js\"", "timeout": 10 }
+79:    "FileChanged": [
+81:        "matcher": "config.json",
+83:          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-config-reload.js\"", "timeout": 8 }
+
+-- installed wiring /home/vibrantclouds/.claude-gsd/settings.json (compact; $NODE = long node-resolver $(for n in ...) prefix):
+12:    "SessionStart": [
+30:    "PostToolUse": [
+32:        "matcher": "Bash|Edit|Write|MultiEdit|Agent|Task",
+42:        "matcher": "Read",
+52:        "matcher": "Bash",
+62:        "matcher": "Write|Edit",
+74:        "matcher": "Write|Edit",
+84:        "matcher": "Write|Edit",
+94:        "matcher": "Bash|Edit|Write|MultiEdit",
+104:        "matcher": "Write|Edit|MultiEdit",
+114:        "matcher": "Bash",
+124:        "matcher": "Agent|Task",
+134:        "matcher": "Write",
+144:        "matcher": "Read|Grep|Bash",
+154:    "SubagentStop": [
+165:    "Stop": [
+176:    "PreCompact": [
+189:        "matcher": "config.json",
+200:  "statusLine": {
+############ 6. shared helpers: where GSD puts runtime scratch ############
+-- $P/hooks/lib/ listing:
+cli-exit.js
+cursor-workspace.js
+dispatch-identity.js
+exit-code-registry.js
+filename-classification.js
+git-cmd.js
+git-probe.js
+gsd-graphify-rebuild.sh
+hook-exit.js
+injection-patterns.js
+isolation-deny-reason.js
+isolation-sentinel.js
+
+-- isolation-sentinel.js: <cwd>/.gsd/dispatch-isolation-sentinel.json, 10-min TTL
+65:const SENTINEL_RELATIVE_PATH = path.join('.gsd', 'dispatch-isolation-sentinel.json');
+92:const SENTINEL_STALE_MS = 10 * 60 * 1000; // 10 minutes
+94:function sentinelPath(cwd) {
+212:  const stale = age >= SENTINEL_STALE_MS || age < -5000;
+
+-- gsd-core/bin/lib/io.cjs: GSD_TEMP_DIR = os.tmpdir()/gsd, 5-min opportunistic reap
+const GSD_TEMP_DIR = node_path_1.default.join(node_os_1.default.tmpdir(), 'gsd');
+function ensureGsdTempDir() {
+    (0, shell_command_projection_cjs_1.platformEnsureDir)(GSD_TEMP_DIR);
+function reapStaleTempFiles(prefix = 'gsd-', { maxAgeMs = 5 * 60 * 1000, dirsOnly = false } = {}) {
+    try {
+        ensureGsdTempDir();
+        if (json.length > 50000) {
+            reapStaleTempFiles();
+            ensureGsdTempDir();
+            const tmpPath = node_path_1.default.join(GSD_TEMP_DIR, `gsd-${Date.now()}.json`);
+            (0, shell_command_projection_cjs_1.platformWriteSync)(tmpPath, json);
+            data = '@file:' + tmpPath;
+        }
+
+-- gsd-core/bin/lib/active-workstream-store.cjs: per-session pointer under os.tmpdir()/gsd-workstream-sessions/<sha1(planningAbs)[0:16]>/<sessionKey>
+function getSessionScopedWorkstreamFile(cwd, fixedSessionKey) {
+    const sessionKey = fixedSessionKey || getWorkstreamSessionKey();
+    if (!sessionKey)
+        return null;
+    let planningAbs;
+    try {
+        planningAbs = node_fs_1.default.realpathSync.native(planningRoot(cwd));
+    }
+    catch {
+        planningAbs = node_path_1.default.resolve(planningRoot(cwd));
+    }
+    const projectId = node_crypto_1.default
+        .createHash('sha1')
+        .update(planningAbs)
+        .digest('hex')
+        .slice(0, 16);
+    const dirPath = node_path_1.default.join(node_os_1.default.tmpdir(), 'gsd-workstream-sessions', projectId);
+    return {
+        sessionKey,
+        dirPath,
+        filePath: node_path_1.default.join(dirPath, sessionKey),
+    };
+}
+   shared (non-session) fallback pointer: <planning>/active-workstream
+function createSharedPointerAdapter(cwd) {
+    const filePath = node_path_1.default.join(planningRoot(cwd), 'active-workstream');
+    return {
+
+-- grep mkdtemp/XDG_* across hooks + gsd-core (NO XDG_STATE_HOME / XDG_CACHE_HOME anywhere):
+$P/gsd-core/bin/lib/capability-source.cjs:843:    const cloneDir = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'gsd-cap-git-'));
+$P/gsd-core/bin/lib/capability-source.cjs:879:    const tmpPackDir = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'gsd-cap-npm-pack-'));
+$P/gsd-core/bin/lib/capability-source.cjs:880:    const extractDir = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'gsd-cap-npm-ext-'));
+$P/gsd-core/bin/lib/capability-source.cjs:945:    const extractDir = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'gsd-cap-tar-'));
+$P/gsd-core/bin/lib/install-profiles.cjs:366:// `stageSkillsForMode`, which creates its stage dir via raw `fs.mkdtempSync`
+$P/gsd-core/bin/lib/install-profiles.cjs:1210:    const stageDir = node_fs_1.default.mkdtempSync(node_path_1.default.join(node_os_1.default.tmpdir(), 'gsd-minimal-skills-'));
+$P/gsd-core/bin/lib/phase-id.cjs:1072: * `gsd-651-broad-grep-a1b2`, an `mkdtemp`-style fixture name that
+
+-- .planning/state.json = machine-readable state contract v1 (#3227), atomic (tmp+rename):
+71:exports.PUBLISH_REASON = exports.PHASE_STATUS = exports.PHASE_KEY_ORDER = exports.CONTRACT_KEY_ORDER = exports.STATE_CONTRACT_FLAVOR = exports.STATE_CONTRACT_VERSION = void 0;
+77:exports.STATE_CONTRACT_VERSION = '1.0.0';
+78:exports.STATE_CONTRACT_FLAVOR = 'core';
+function publishStateContract(cwd, deps) {
+   publishers (11 step-boundary commands):
+$P/gsd-core/bin/lib/milestone.cjs:1161:    publishStateContract(cwd);
+$P/gsd-core/bin/lib/phase.cjs:1264:    publishStateContract(cwd);
+$P/gsd-core/bin/lib/phase.cjs:1373:    publishStateContract(cwd);
+$P/gsd-core/bin/lib/phase.cjs:1558:    publishStateContract(cwd);
+$P/gsd-core/bin/lib/phase.cjs:2136:    publishStateContract(cwd);
+$P/gsd-core/bin/lib/phase.cjs:3998:        publishStateContract(cwd);
+$P/gsd-core/bin/lib/state.cjs:905:        publishStateContract(cwd);
+$P/gsd-core/bin/lib/state.cjs:4726:        publishStateContract(cwd);
+$P/gsd-core/bin/lib/state.cjs:5052:        publishStateContract(cwd);
+$P/gsd-core/bin/lib/state.cjs:5092:        publishStateContract(cwd);
+$P/gsd-core/bin/lib/state.cjs:6128:        publishStateContract(cwd);
+
+############ 7. LIVE machine survey ############
+$ echo TMPDIR=${TMPDIR:-unset}; node -e os.tmpdir()
+TMPDIR=unset  ->  /tmp
+
+$ ls -la /tmp/claude-ctx-*
+-rw-r--r--. 1 vibrantclouds vibrantclouds 116 Sep 15 21:47 /tmp/claude-ctx-63be4726-8e48-4b7a-898b-53af528d9f3b.json
+-rw-r--r--. 1 vibrantclouds vibrantclouds 116 Sep 15 22:19 /tmp/claude-ctx-9e0d3148-c0e6-4d64-8bf4-586141ed6440.json
+-rw-r--r--. 1 vibrantclouds vibrantclouds 116 Sep 15 22:26 /tmp/claude-ctx-a0298719-b18d-4e8f-bbea-cffdfa42aa7a.json
+  ... (7 total, one per live session; all mode 0644, ~116 bytes) ...
+
+$ cat /tmp/claude-ctx-*.json   (3 of 7 shown)
+{"session_id":"63be4726-8e48-4b7a-898b-53af528d9f3b","remaining_percentage":77,"used_pct":23,"timestamp":1789523243}
+{"session_id":"9e0d3148-c0e6-4d64-8bf4-586141ed6440","remaining_percentage":73,"used_pct":27,"timestamp":1789525160}
+{"session_id":"a0298719-b18d-4e8f-bbea-cffdfa42aa7a","remaining_percentage":86,"used_pct":14,"timestamp":1789525613}
+
+$ ls -la /tmp/gsd /tmp/gsd-workstream-sessions
+total 68
+drwxr-xr-x.  2 vibrantclouds vibrantclouds    60 Sep 15 22:24 .
+drwxrwxrwt. 72 root          root           1960 Sep 15 22:27 ..
+-rw-r--r--.  1 vibrantclouds vibrantclouds 67746 Sep 15 22:24 gsd-1789525449685.json
+ls: cannot access '/tmp/gsd-workstream-sessions': No such file or directory
+
+$ ls -la /home/vibrantclouds/.cache/gsd ; cat the file
+total 4
+drwxr-xr-x. 1 vibrantclouds vibrantclouds   76 Sep 15 22:21 .
+drwx------. 1 vibrantclouds vibrantclouds 2366 Sep 13 14:40 ..
+-rw-r--r--. 1 vibrantclouds vibrantclouds  121 Sep 15 22:21 gsd-update-check-opengsd-gsd-core.json
+{"update_available":false,"installed":"1.14.0","latest":"1.14.0","checked":1789525302,"package_name":"@opengsd/gsd-core"}
+
+$ ls -la /home/vibrantclouds/.claude-gsd   (this is a CLAUDE_CONFIG_DIR CLONE — a GSD 'profile' install, NOT a GSD runtime-state dir)
+  entries: .claude.json .credentials.json .gsd-profile(="full") .gsd-source .gsd-staging/ .last-cleanup .last-update-result.json
+           agents/ backups/ cache/ file-history/ gsd-core/ gsd-file-manifest.json gsd-install-state.json gsd-migration-journal/
+           history.jsonl hooks/ paste-cache/ plugins/ projects/ scripts/ session-env/ sessions/ settings.json shell-snapshots/ skills/
+  -> cache/ holds only changelog.md + model-catalog/ (Claude Code's own); sessions/, session-env/, projects/ are Claude Code's, not GSD's.
+  -> NO context %, NO phase/state, NO token counts are written anywhere under ~/.claude-gsd by these hooks.
+
+$ find /home/vibrantclouds/Development/SizeComparisonSite/.planning -maxdepth 1 -type f ; ls -la /home/vibrantclouds/Development/SizeComparisonSite/.gsd
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/config.json
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/MILESTONES.md
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/PROJECT.md
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/REQUIREMENTS.md
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/RETROSPECTIVE.md
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/ROADMAP.md
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/STATE.md
+/home/vibrantclouds/Development/SizeComparisonSite/.planning/WINDOWS.md
+ls: cannot access '/home/vibrantclouds/Development/SizeComparisonSite/.gsd': No such file or directory
+
+$ find /home/vibrantclouds/Development/ProjectManager/.planning -maxdepth 1 -type f ; ls -la /home/vibrantclouds/Development/ProjectManager/.gsd
+/home/vibrantclouds/Development/ProjectManager/.planning/config.json
+/home/vibrantclouds/Development/ProjectManager/.planning/PROJECT.md
+/home/vibrantclouds/Development/ProjectManager/.planning/REQUIREMENTS.md
+/home/vibrantclouds/Development/ProjectManager/.planning/ROADMAP.md
+/home/vibrantclouds/Development/ProjectManager/.planning/STATE.md
+/home/vibrantclouds/Development/ProjectManager/.planning/WINDOWS.md
+ls: cannot access '/home/vibrantclouds/Development/ProjectManager/.gsd': No such file or directory
+
+$ find /home/vibrantclouds/Development/CharacterDossier/.planning -maxdepth 1 -type f ; ls -la /home/vibrantclouds/Development/CharacterDossier/.gsd
+/home/vibrantclouds/Development/CharacterDossier/.planning/config.json
+/home/vibrantclouds/Development/CharacterDossier/.planning/INGEST-CONFLICTS.md
+/home/vibrantclouds/Development/CharacterDossier/.planning/PROJECT.md
+/home/vibrantclouds/Development/CharacterDossier/.planning/REQUIREMENTS.md
+/home/vibrantclouds/Development/CharacterDossier/.planning/ROADMAP.md
+/home/vibrantclouds/Development/CharacterDossier/.planning/state.json
+/home/vibrantclouds/Development/CharacterDossier/.planning/STATE.md
+/home/vibrantclouds/Development/CharacterDossier/.planning/WINDOWS.md
+ls: cannot access '/home/vibrantclouds/Development/CharacterDossier/.gsd': No such file or directory
+
+$ cat /home/vibrantclouds/Development/CharacterDossier/.planning/state.json  (LIVE example of the state contract)
+-rw-r--r--. 1 vibrantclouds vibrantclouds 1073 Sep 15 21:45 /home/vibrantclouds/Development/CharacterDossier/.planning/state.json
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1.0",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Foundation + Library",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+    ... (phases[] elided) ...
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step (plan phase 4)",
+    "reason": "Phase 4 of 8 — needs a plan"
+  },
+  "updated_at": "2026-09-16T01:45:41.473Z"
+}
+
+$ head -17 /home/vibrantclouds/Development/ProjectManager/.planning/STATE.md (frontmatter the statusline parses)
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+current_phase: 02
+current_phase_name: execution-worktree-runner-billing-safety
+status: executing
+stopped_at: Completed 02-14-PLAN.md
+last_updated: "2026-07-26T18:33:45.721Z"
+last_activity: 2026-07-26
+last_activity_desc: Phase 02 execution started
+progress:
+  total_phases: 3
+  completed_phases: 1
+  total_plans: 24
+  completed_plans: 21
+---
+
+$ statusline.* / hooks.* config actually set in the 3 real projects:
+/home/vibrantclouds/Development/SizeComparisonSite -> {"mode":"yolo","hooks":{"context_warnings":true}}
+/home/vibrantclouds/Development/ProjectManager -> {"mode":"yolo","hooks":{"context_warnings":true}}
+/home/vibrantclouds/Development/CharacterDossier -> {}
+
+$ installed copies (drift!):
+  package  $P/hooks/gsd-statusline.js           : // gsd-hook-version: {{GSD_VERSION}}  (48793 bytes)
+  ~/.claude-gsd/hooks/gsd-statusline.js         : // gsd-hook-version: 1.14.0  (48784 bytes)
+  SizeComparisonSite/.claude/hooks/gsd-statusline.js : // gsd-hook-version: 1.9.1  (34215 bytes) — same bridge path at its line 537
+537:          const bridgePath = path.join(os.tmpdir(), `claude-ctx-${session}.json`);
+
+############ 8. observed anomaly (recorded, not acted on) ############
+At 22:24 a `find /home/vibrantclouds/Development/ProjectManager/.planning -maxdepth 1 -type f`
+listed `.planning/state.json`; three minutes later the same path did not exist, while
+`.planning/STATE.md` mtime had advanced to 22:25:21. A concurrent GSD/Claude session was
+writing that project during the spike. Conclusion for a third-party reader: `.planning/state.json`
+is publish-on-boundary and may be ABSENT between publishes (and is absent entirely in projects
+that have not run a publishing boundary command since 1.x added it) — see CharacterDossier, which
+HAS one, vs SizeComparisonSite, which does not.
+
+############ 9. DECISIONS ############
+VERIFY-4: CONFIRMED. Sole machine-readable intermediate artifact = ${TMPDIR:-/tmp}/claude-ctx-<session_id>.json
+  (os.tmpdir(), flat, per-session, 0644, JSON {session_id, remaining_percentage, used_pct, timestamp(epoch s)}),
+  rewritten on EVERY statusline render, non-atomic writeFileSync, 60s staleness by CONVENTION only
+  (consumer-side STALE_SECONDS), no schema version field, no cleanup/TTL, private contract between two
+  GSD hooks. Readable but not reliable as a public API. Companion per-session files written by the monitor:
+  claude-ctx-<sid>-warned.json and claude-ctx-<sid>-compacted.json. No phase/state or token counts land here.
+  Phase/state for third parties: <project>/.planning/state.json (contract 1.0.0, atomic tmp+rename) or STATE.md.
+VERIFY-5: CONFIRMED NO-OP-BY-DEFAULT. gsd-phase-boundary.sh is a PostToolUse(Write|Edit) hook that is a
+  no-op unless .planning/config.json has hooks.community === true (none of the 3 real projects set it).
+  It writes NO file, leaves NO marker/sentinel, always exits 0, and its only output is a stdout JSON
+  envelope {hookSpecificOutput:{hookEventName:"PostToolUse", additionalContext, planning_modified, file_path}}
+  consumed by the harness — not observable by a third-party process.

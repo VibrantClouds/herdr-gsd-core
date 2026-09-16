@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/usr/bin/node\" \"/home/u/.codex/hooks/gsd-check-update.js\"",
+            "commandWindows": "\"C:/Users/u/.codex/hooks/gsd-check-update.cmd\""
+          }
+        ]
+      }
+    ]
+  }
+}

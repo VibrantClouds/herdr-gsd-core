@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-gallery-and-portrait.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Gallery (`type: 'gallery'`) and Portrait",
+  "summary": "Technical specification for Gallery and Portrait page types, including schemas, image pipeline constraints, editor UI, and rendering.",
+  "scope": ["Gallery", "Portrait", "image pipeline", "schema", "ImageRef", "editor", "lightbox", "drag-drop", "content-addressed storage", "pipeline kinds"],
+  "cross_refs": ["SPEC-image-pipeline.md", "0012-content-addressed-images-no-gc.md", "SPEC-domain-model.md"],
+  "locked": false,
+  "precedence": null
+}

@@ -1,0 +1,751 @@
+================================================================================
+M0-G-hooks.txt — raw evidence capture
+Spike: VERIFY-1 (third-party lifecycle event seam) + item 6 (Codex/OpenCode adapters)
+Target: @opengsd/gsd-core 1.14.0
+$P = /home/vibrantclouds/.npm/_npx/a78857a30883db8e/node_modules/@opengsd/gsd-core
+Captured: 2026-09-15. READ-ONLY investigation.
+================================================================================
+
+--------------------------------------------------------------------------------
+[0] PACKAGE IDENTITY
+--------------------------------------------------------------------------------
+$P/package.json:1-8
+  "name": "@opengsd/gsd-core", "version": "1.14.0",
+  "main": ".opencode/plugins/gsd-core.js",
+  bin: gsd-core -> bin/install.js, gsd-tools -> gsd-core/bin/gsd-tools.cjs,
+       gsd_run -> gsd-core/bin/gsd_run, gsd-mcp-server -> bin/gsd-mcp-server.js
+
+$ node -e 'console.log(JSON.stringify({exports:p.exports,main:p.main,types:p.types}))'
+  {"main": ".opencode/plugins/gsd-core.js"}
+  ==> NO "exports" field. No "sdk" subpath. No "types".
+
+--------------------------------------------------------------------------------
+[1] $P/hooks/hooks.json  (88 lines, FULL FILE)
+--------------------------------------------------------------------------------
+This is the Claude-Code *plugin* manifest (${CLAUDE_PLUGIN_ROOT} expansion), used
+by the .claude-plugin marketplace path. NOT the settings.json writer.
+
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [
+          { "type":"command","command":"node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-ensure-canonical-path.js\"","timeout":5 },
+          { "type":"command","command":"node \"${CLAUDE_PLUGIN_ROOT}/hooks/gsd-check-update.js\"" } ] } ],
+    "PreToolUse": [
+      { "matcher":"Write|Edit",            "hooks":[ gsd-prompt-guard.js (t5), gsd-read-guard.js (t5) ] },
+      { "matcher":"Write|Edit|MultiEdit",  "hooks":[ gsd-worktree-path-guard.js (t5) ] },
+      { "matcher":"Write",                 "hooks":[ gsd-write-guard.js (t5) ] },
+      { "matcher":"Read|Grep|Bash",        "hooks":[ gsd-secret-read-guard.js (t5) ] },
+      { "matcher":"Agent|Task",            "hooks":[ gsd-agent-isolation-guard.js (t5) ] } ],
+    "PostToolUse": [
+      { "matcher":"Bash|Edit|Write|MultiEdit|Agent|Task", "hooks":[ gsd-context-monitor.js (t10) ] },
+      { "matcher":"Read|WebFetch|WebSearch",              "hooks":[ gsd-read-injection-scanner.js (t5) ] } ],
+    "SubagentStop": [ { "hooks":[ gsd-context-monitor.js (t10) ] } ],
+    "Stop":         [ { "hooks":[ gsd-context-monitor.js (t10) ] } ],
+    "PreCompact":   [ { "hooks":[ gsd-context-monitor.js (t10) ] } ],
+    "FileChanged":  [ { "matcher":"config.json", "hooks":[ gsd-config-reload.js (t8) ] } ]
+  }
+}
+
+SCHEMA: {hooks:{<HarnessEventName>:[{matcher?:string, hooks:[{type:"command",
+        command:string, timeout?:seconds}]}]}}
+NOTE: every event name here is a CLAUDE CODE harness event. There is NO
+      GSD-domain event (no PhaseStart, PlanStart, SubagentDispatch, etc.).
+NOTE: per-harness variants are NOT expressed in this file. They are expressed
+      in the compiled capability registry (see [7]) + install.js writers.
+
+--------------------------------------------------------------------------------
+[2] $P/hooks/managed-hooks-registry.cjs  (51 lines — FULL)
+--------------------------------------------------------------------------------
+It is ONLY a flat array of filenames. No detect/remove/merge logic lives here.
+
+  :18  const MANAGED_HOOKS = [
+  :19-48  (28 entries) gsd-agent-isolation-guard.js, gsd-check-update-worker.js,
+       gsd-check-update.js, gsd-config-reload.js, gsd-context-monitor.js,
+       gsd-cursor-{post-tool,pre-tool,session-start,stop,subagent-start,subagent-stop}.js,
+       gsd-ensure-canonical-path.js, gsd-graphify-update.sh, gsd-node-runner.sh,
+       gsd-phase-boundary.sh, gsd-prompt-guard.js, gsd-read-guard.js,
+       gsd-read-injection-scanner.js, gsd-secret-read-guard.js, gsd-session-state.sh,
+       gsd-statusline.js, gsd-update-banner.js, gsd-validate-commit.sh,
+       gsd-windsurf-{pre-command,pre-write}.js, gsd-workflow-guard.js,
+       gsd-worktree-path-guard.js, gsd-write-guard.js ]
+  :51  module.exports = { MANAGED_HOOKS };
+
+Docstring :13-16 — "These are the files GSD ships into ~/.claude/hooks/ ... and
+checks for staleness after an update. Orphaned files from removed features ...
+must NOT be listed here".
+
+Ownership/merge logic actually lives in:
+  - $P/gsd-core/bin/lib/shell-cmd-projection.* -> isManagedHookCommand /
+    isManagedHookBasename  (surface: 'codex-toml' | 'codex-hooks-json' | ...)
+  - $P/gsd-core/bin/lib/runtime-hooks-surface.cjs  (the reconcilers)
+  - marker key 'gsd-managed' for cursor/windsurf hooks.json entries
+    (runtime-hooks-surface.cjs:1750 GSD_WINDSURF_HOOK_MARKER;
+     host-integration-adapters/imperative-hook-bus.cjs:67 GSD_HOOK_MARKER)
+
+--------------------------------------------------------------------------------
+[3] THE ADR-1239 SEAM MODULES  ($P/gsd-core/bin/lib/)
+--------------------------------------------------------------------------------
+Files present (all compiled .cjs from .cts sources not shipped):
+  hook-bus.cjs, host-integration.cjs, host-integration-sdk.cjs,
+  embedding-adapter.cjs, adapter-declarative.cjs, adapter-imperative.cjs,
+  model-adapter.cjs, state-io.cjs, handshake-serialized.cjs,
+  external-descriptor-trust.cjs, capability-*.cjs,
+  host-integration-adapters/imperative-hook-bus.cjs
+
+### 3a. $P/gsd-core/bin/lib/hook-bus.cjs  (81 lines — FULL, verbatim key parts)
+
+  :1-23 (docstring, abridged):
+   * Hook-bus seam (ADR-1239 Phase C-1, AC4 / #1680).
+   *   - `engine` — GSD owns the bus internally (in-process pub/sub) ... Full subscribe + emit.
+   *   - `host`   — the host fires events; GSD subscribes. Handlers register
+   *     locally for a Phase-5 host binding to dispatch to; `emit` delegates to a
+   *     host-supplied emitter (fail-closed until bound ...).
+   *   - `none`   — no bus (Cline-rules) ... subscribe/emit are no-ops.
+   * Minimal seam (per ADR-1239 open wire-shape question): THE HOST-SIDE DISPATCH
+   * WIRING LANDS IN PHASE 5 (#1682). This slice ships the three ownership modes
+   * + the engine pub-sub + the fail-closed contract.
+
+  :28  exports.PORTABLE_EVENT_FLOOR = Object.freeze(
+         ['SessionStart','PreToolUse','PostToolUse','Stop','SessionEnd']);
+  :33-39  bus==='none'  -> { subscribe(){}, emit(){} }        // no-ops
+  :40-63  bus==='engine'-> real Map-backed pub/sub, handler errors swallowed
+  :65-80  bus==='host':
+  :69-73      subscribe(_event,_handler) {
+                // Host owns the bus; GSD's subscriptions are dispatched by a
+                // Phase-5 host binding ... Stored host-side; locally this is a
+                // seam until that binding lands.
+              }                                     <-- EMPTY BODY. NO-OP.
+  :74-79      emit(event,payload){ if(typeof hostEmit!=='function')
+                 throw new Error("host hook-bus emit: no host emitter bound —
+                 the 'host' bus requires a hostEmit primitive (Phase 5 wires
+                 the concrete host)."); hostEmit(event,payload); }
+
+### 3b. LIVE RUNTIME PROBE (node /home/vibrantclouds/.local/bin/node)
+
+  $ node -e '...require($P/gsd-core/bin/lib/hook-bus.cjs)...'
+  PORTABLE_EVENT_FLOOR = ["SessionStart","PreToolUse","PostToolUse","Stop","SessionEnd"]
+  host emit THREW: host hook-bus emit: no host emitter bound — the 'host' bus
+      requires a hostEmit primitive (Phase 5 wires the concrete host).
+  host handler invocations after emit: 0        <-- subscribe() on 'host' is inert
+  engine bus handler invocations: 1             <-- only 'engine' bus works
+  hookEventSurfaceFor(claude)= ["SessionStart","PreToolUse","PostToolUse",
+                                "Stop","SessionEnd","PreCompact"]
+  axes keys= embeddingMode,commandSurface,modelMode,hookBus,stateIO,transport,
+             runtime,subagentToolkit,effortSurface,isolation
+
+### 3c. NO PRODUCER EXISTS — grep over the WHOLE package
+
+  $ grep -rn "\.emit("      $P      ->  (no output)
+  $ grep -rn "\.subscribe(" $P      ->  (no output)
+
+  ==> Nothing in 1.14.0 ever calls emit() or subscribe(). The bus is
+      constructed in exactly one place and never driven.
+
+### 3d. The only createHookBus call sites
+
+  $ grep -rn "hook-bus\|createHookBus\|PORTABLE_EVENT_FLOOR" $P
+  $P/gsd-core/bin/lib/host-integration-sdk.cjs:24  const hookBus = require("./hook-bus.cjs");
+  $P/gsd-core/bin/lib/host-integration-sdk.cjs:46      createHookBus: hookBus.createHookBus,
+  $P/vscode/host-binding.js:70   const { createHookBus } = require('../gsd-core/bin/lib/hook-bus.cjs');
+  $P/vscode/host-binding.js:97   const hookBus = createHookBus({ bus: 'engine' });
+  (+ comments only in install.js:8581, 8611, 12636 and runtime-hooks-surface.cjs)
+
+  $P/vscode/host-binding.js:112
+     return Object.freeze({ runtime:'vscode', model, hookBus, stateIO, adapter, commands });
+  ==> the bus object is returned to a hypothetical VS Code extension and then
+      never emitted to by any GSD code path.
+
+### 3e. $P/gsd-core/bin/lib/host-integration-sdk.cjs  (53 lines — FULL surface)
+
+  :1-13 docstring: "Host-Integration SDK — the published public surface
+        (ADR-1239 Phase E / #1683). External host-plugin authors import ONLY
+        from this entry. It IS the contract..."
+  :29-52 SDK = Object.freeze({
+     PROTOCOL_VERSION, HOST_INTEGRATION_AXES, INTERFACE_POINTS, PROFILE_BASELINES,
+     negotiateHostCapabilities, profileOf, degradationFor,
+     hookEventSurfaceFor, extensionEventSurfaceFor, shouldFlattenDispatch,
+     createDeclarativeAdapter, createImperativeAdapter, createModelAdapter,
+     createHookBus, createStateIO,
+     HANDSHAKE_METHOD, buildHandshakeRequest, handleHandshakeRequest })
+
+### 3f. THE DOCUMENTED IMPORT PATH IS BROKEN IN 1.14.0
+
+  docs/how-to/author-a-host-plugin.md (upstream v1.14.0 tag) says:
+     const SDK = require('@opengsd/gsd-core/sdk'); // the published entry
+
+  $ cd .../node_modules/.. && node -e 'require("@opengsd/gsd-core/sdk")'
+    FAIL: MODULE_NOT_FOUND Cannot find module '@opengsd/gsd-core/sdk'
+  $ ls $P/sdk*                     -> no such file or directory
+  $ grep -n '"sdk"' $P/package.json -> (no match)
+  $ node -e 'require("@opengsd/gsd-core")'  -> OK (resolves to the OpenCode plugin)
+  $ node -e 'require("@opengsd/gsd-core/gsd-core/bin/lib/host-integration-sdk.cjs")'
+    OK PROTOCOL_VERSION,HOST_INTEGRATION_AXES,INTERFACE_POINTS,PROFILE_BASELINES,
+       negotiateHostCapabilities,profileOf,degradationFor,hookEventSurfaceFor,
+       extensionEventSurfaceFor,shouldFlattenDispatch,createDeclarativeAdapter,
+       createImperativeAdapter,createModelAdapter,createHookBus,createStateIO,
+       HANDSHAKE_METHOD,buildHandshakeRequest,handleHandshakeRequest
+  ==> only a deep unversioned path works (no "exports" field => no encapsulation).
+
+### 3g. $P/gsd-core/bin/lib/embedding-adapter.cjs :1-27
+  "INTENTIONALLY MINIMAL (Phase 3 slice 1). The full six-interface-point binding
+   surface (command / dispatch / model / hooks / state / artifact) is DEFERRED
+   ... ADR-1239 lists the wire-shape as an open question"
+  exports.ADAPTER_KINDS = Object.freeze(['declarative','imperative']);  // that's all
+
+--------------------------------------------------------------------------------
+[4] EVENT VOCABULARIES ($P/gsd-core/bin/lib/host-integration.cjs)
+--------------------------------------------------------------------------------
+  :17   const PROTOCOL_VERSION = 1;
+  :28   const UNDOCUMENTED = 'undocumented';   // fail-closed sentinel
+  :32-60 HOST_INTEGRATION_AXES = { embeddingMode, commandSurface, modelMode,
+         hookBus:['host','engine','none'], stateIO, transport, runtime,
+         subagentToolkit, effortSurface, isolation }
+  :67   INTERFACE_POINTS = ['command','dispatch','model','hooks','state','artifact']
+
+  :600-603  HOOK_EVENT_SURFACES = {
+              claude: ['SessionStart','PreToolUse','PostToolUse','Stop',
+                       'SessionEnd','PreCompact'],
+              gemini: ['SessionStart','BeforeTool','AfterTool','SessionEnd'] }
+  :630-636  OPENCODE_EXTENSION_EVENTS = ['session.created','session.idle',
+              'experimental.session.compacting','tool.execute.before',
+              'tool.execute.after','file.edited','permission.asked',
+              'permission.replied','session.error']
+  :637-674  EXTENSION_EVENT_SURFACES = { opencode: <above>, kilo: <same array>,
+              hermes: ['pre_tool_call','post_tool_call','pre_llm_call',
+                'post_llm_call','on_session_start','on_session_end',
+                'on_session_finalize','on_session_reset','subagent_start',
+                'subagent_stop','pre_gateway_dispatch','pre_approval_request',
+                'transform_tool_result'],
+              pi: [30 events: session_start ... model_select],
+              none: [] }
+  :679-682 (docstring) "For 'opencode' it carries NO WORKFLOW-PHASE EVENTS — the
+           engine owns phase sequencing internally on such hosts (ADR-1239 §OpenCode)."
+
+  ==> EVERY vocabulary is a HARNESS/host event vocabulary. There is no GSD-domain
+      lifecycle vocabulary anywhere (no phase-start/phase-end/plan-start/
+      plan-stop/subagent-dispatch names in any frozen list).
+
+--------------------------------------------------------------------------------
+[5] INSTALLER: SETTINGS.JSON MERGE POLICY (additive, preserves foreign entries)
+--------------------------------------------------------------------------------
+$P/bin/install.js:1285  const applySettingsJsonHooks = hooksSurface.applySettingsJsonHooks;
+Implementation: $P/gsd-core/bin/lib/runtime-hooks-surface.cjs:2012
+
+  :2031  if (hooksSurface !== 'none' && hooksSurface !== 'kimi-hooks-toml') {
+  :2032-2034   if (!settings.hooks) { settings.hooks = {}; }
+  :2035-2037   if (!settings.hooks.SessionStart) { settings.hooks.SessionStart = []; }
+  :2045        const BLOCKING_GUARD_TIMEOUT_S = 120;     // #3981
+  :2046-2054   blockingGuardNames = [gsd-prompt-guard, gsd-workflow-guard,
+                 gsd-worktree-path-guard, gsd-agent-isolation-guard,
+                 gsd-write-guard, gsd-secret-read-guard, gsd-validate-commit]
+  :2055-2068   migration pass: only raises timeout on entries that
+               referencesHook(h,<gsd name>) — foreign entries untouched
+  :2069        const hasGsdUpdateHook = settings.hooks.SessionStart.some(
+                 entry => entry.hooks && entry.hooks.some(h =>
+                   referencesHook(h,'gsd-check-update')));
+  :2075-2085   if (!hasGsdUpdateHook && existsSync(checkUpdateFile) && updateCheckCommand)
+                 settings.hooks.SessionStart.push({hooks:[{type:'command',command:...}]})
+  :2090-2107   same push-if-absent pattern for postToolEvent + gsd-context-monitor
+               (matcher 'Bash|Edit|Write|MultiEdit|Agent|Task', timeout 10)
+  :2136        const preToolEvent = hookEvents === 'gemini' ? 'BeforeTool' : 'PreToolUse';
+  :2142-2153   push gsd-prompt-guard (matcher 'Write|Edit', timeout 120)
+  :2163-2171   push gsd-read-guard   (matcher 'Write|Edit', timeout 5)
+  ... (same push-if-absent for every managed hook)
+
+  ==> MERGE, never overwrite. `settings.hooks` is created only when missing;
+      arrays are appended to; presence is detected by referencesHook() against
+      GSD's own basenames. THIRD-PARTY ENTRIES ARE PRESERVED.
+
+Uninstall side ($P/bin/install.js:9027-9084) filters by isManagedHookCommand and
+deletes only emptied GSD event arrays:
+  :9054-9073  settings.hooks[eventName] = settings.hooks[eventName].filter(...
+                 return !isManagedHookCommand(h.command, {...}) ...)
+              if (settings.hooks[eventName].length === 0) delete settings.hooks[eventName];
+  :9082-9083  if (settings.hooks && Object.keys(settings.hooks).length === 0)
+                delete settings.hooks;
+
+Orphan cleanup: $P/bin/install.js:8000-8032 (same managed-command filter).
+Schema-rejection guard: $P/bin/install.js:8057-8129 — validates hook field
+requirements because "the ENTIRE settings.json is silently discarded" otherwise.
+
+NO extension point: grep found no "user hook", "custom hook", "extraHooks",
+"userHooks", "extensionPoint" escape hatch anywhere in install.js. The only
+supported way a third party appears in GSD-written settings.json is to write
+its own entry and rely on GSD's additive merge leaving it alone.
+
+LIVE EVIDENCE — /home/vibrantclouds/.claude-gsd/settings.json top keys:
+  ["permissions","hooks","statusLine","tui","theme","agentPushNotifEnabled"]
+  SessionStart: gsd-check-update.js (node-resolver preamble); bash gsd-session-state.sh
+  PostToolUse:  Bash|Edit|Write|MultiEdit|Agent|Task -> gsd-context-monitor.js (t10);
+                Read -> gsd-read-injection-scanner.js (t5);
+                Bash -> bash gsd-graphify-update.sh (t5);
+                Write|Edit -> bash gsd-phase-boundary.sh (t5)
+  PreToolUse:   Write|Edit -> gsd-prompt-guard.js (t120); Write|Edit -> gsd-read-guard.js (t5);
+                Bash|Edit|Write|MultiEdit -> ... (truncated)
+
+--------------------------------------------------------------------------------
+[6] .planning/config.json  hooks.*  — COMPLETE KEY SET
+--------------------------------------------------------------------------------
+AUTHORITATIVE LIST: $P/gsd-core/bin/shared/config-schema.manifest.json:78-83
+  "hooks.context_warnings",
+  "hooks.context_warning_threshold",
+  "hooks.context_critical_threshold",
+  "hooks.workflow_guard",
+  "hooks.commit_types",
+  "hooks.community"
+(six keys; nothing else. `grep -rhno "hooks\.[a-z_]\+"` over the tree produced
+ only these plus JS property accesses: .after/.before/.every/.filter/.length/
+ .map/.on/.push/.some/.test/.json/.toml/.js/.md/.html/.shell/.state/.simulate/
+ .research_questions — all false positives.)
+
+Defaults:
+  $P/gsd-core/bin/lib/config.cjs:120  'hooks.context_warning_threshold': 35,
+  $P/gsd-core/bin/lib/config.cjs:121  'hooks.context_critical_threshold': 25,
+  $P/gsd-core/bin/lib/config.cjs:358  context_warnings: true,
+  $P/gsd-core/templates/config.json:57-59   "hooks": { "context_warnings": true }
+  $P/hooks/gsd-workflow-guard.js:17   // Enable via config: hooks.workflow_guard: true (default: false)
+  $P/hooks/gsd-workflow-guard.js:181  return Boolean(config.hooks?.workflow_guard);
+  $P/hooks/gsd-phase-boundary.sh:7-8  OPT-IN: no-op unless hooks.community: true
+  $P/hooks/gsd-session-state.sh:6-7   same
+  $P/hooks/gsd-validate-commit.sh:8-9 same; :49 const raw=c.hooks?.commit_types;
+  $P/gsd-core/bin/lib/runtime-hooks-surface.cjs:2201-2203 (community opt-in note)
+  $P/gsd-core/bin/lib/runtime-hooks-surface.cjs:2204,2230 (workflow_guard opt-in)
+
+Documented table: $P/gsd-core/references/planning-config.md:357-365
+  "### Hook Fields / Set via `hooks.*` namespace"
+  | hooks.context_warnings          | boolean | true | Show warnings when context budget is exceeded |
+  | hooks.context_warning_threshold | number  | 35   | % context REMAINING at/below which -> CONTEXT WARNING;
+      must be >0 and <=100 and strictly > critical; config-set refuses 0;
+      read from ROOT project config only; inert where no context-monitor hook
+      is installed (Codex among them, #2586) |
+  | hooks.context_critical_threshold| number  | 25   | % context REMAINING at/below which -> CONTEXT CRITICAL;
+      >=0 and <100 and strictly < warning; config-set refuses 100 |
+  (hooks.workflow_guard / hooks.commit_types / hooks.community are NOT in that
+   reference table — they are schema-manifest + code/doc-comment only.)
+  Validation: config.cjs:909-935 (pair ordering enforced by config-set).
+  Merge: config.cjs:401-405 — hooks:{...hardcoded, ...userDefaults, ...choices}
+  (3-level shallow merge; no hooks.* key registers a callback/command.)
+
+  ==> ALL SIX ARE BEHAVIOUR TOGGLES FOR GSD'S OWN STAGED HOOKS.
+      NONE registers a third-party command, script, URL, or subscriber.
+
+--------------------------------------------------------------------------------
+[7] PER-HARNESS HOOK SURFACE — as IMPLEMENTED (compiled capability registry)
+--------------------------------------------------------------------------------
+Extracted live from $P/gsd-core/bin/lib/capability-registry.cjs
+(role==='runtime' entries; fields runtime.hooksSurface / runtime.hookEvents /
+ runtime.extendedHookEvents / runtime.extensionEvents /
+ runtime.hostIntegration.hookBus / .embeddingMode /
+ runtime.hostBehaviors.managedHookEvents / .nativePlugin)
+
+id          hooksSurface        hookEvents extendedHookEvents                         extEvents hookBus embed       nativePlugin
+antigravity settings-json       gemini     []                                         -         host    declarative -
+augment     settings-json       claude     []                                         -         host    declarative -
+claude      settings-json       claude     [SubagentStop,Stop,PreCompact,FileChanged] -         host    imperative  -
+cline       cline-rules         -          []                                         -         host    imperative  -
+codebuddy   settings-json       claude     [SubagentStop,Stop,PreCompact,SubagentStart] -       host    declarative -
+codex       codex-hooks-json    claude     [SubagentStop,Stop,PreCompact]             -         host    declarative -
+copilot     copilot-inline      -          []                                         -         host    declarative -
+cursor      cursor-hooks-json   claude     []                                         -         host    imperative  -
+            managedHookEvents = [sessionStart,postToolUse,preToolUse,stop,subagentStart,subagentStop]
+hermes      settings-json       claude     []                                         hermes    host    imperative  -
+kilo        none                -          []                                         kilo      host    imperative  plugins/gsd-core.js
+kimi        kimi-hooks-toml     claude     [SubagentStop,Stop,PreCompact,SubagentStart] -       host    imperative  -
+kimi-code   kimi-hooks-toml     claude     [SubagentStop,Stop,PreCompact,SubagentStart] -       host    declarative -
+opencode    none                -          []                                         opencode  host    imperative  plugins/gsd-core.js
+pi          none                -          []                                         pi        host    imperative  extensions/gsd.js
+qwen        settings-json       claude     [SubagentStop,Stop,PreCompact,SubagentStart] -       host    imperative  -
+trae        none                -          []                                         -         engine  imperative  -
+vscode      none                -          []                                         none      engine  imperative  -
+windsurf    windsurf-hooks-json -          []                                         -         host    declarative -
+zcode       (see registry; trailing entry truncated in probe output)
+
+Windsurf actual events: $P/gsd-core/bin/lib/runtime-hooks-surface.cjs:1752
+  const WINDSURF_HOOK_EVENTS = Object.freeze(['pre_write_code','pre_run_command']);
+  :1750 GSD_WINDSURF_HOOK_MARKER = 'gsd-managed'
+  :1848 writeWindsurfHooksJson(targetDir, src, opts)
+  scripts: gsd-windsurf-pre-write.js, gsd-windsurf-pre-command.js
+
+Cursor actual events: $P/gsd-core/bin/lib/host-integration-adapters/imperative-hook-bus.cjs
+  :39-46 CURSOR_HOOK_EVENTS = [sessionStart, postToolUse, preToolUse, stop,
+                               subagentStart, subagentStop]
+  :55-62 CURSOR_EVENT_SCRIPT_MAP = { sessionStart:'gsd-cursor-session-start.js',
+           postToolUse:'gsd-cursor-post-tool.js', preToolUse:'gsd-cursor-pre-tool.js',
+           stop:'gsd-cursor-stop.js', subagentStart:'gsd-cursor-subagent-start.js',
+           subagentStop:'gsd-cursor-subagent-stop.js' }
+  :67   GSD_HOOK_MARKER = 'gsd-managed'
+  :82-96 resolveManagedHookEvents() — unknown event names silently filtered
+         (fail-closed); falls back to the full CURSOR_HOOK_EVENTS set.
+  :132-145 buildHookBusEntries() -> {event:{type:'command',command,'gsd-managed':true}}
+
+--------------------------------------------------------------------------------
+[8] CODEX ADAPTER MECHANICS (QUESTION B)
+--------------------------------------------------------------------------------
+### 8a. WHICH FILE — hooks.json, NOT config.toml
+
+$P/bin/install.js:1341-1362 (doc comment on ensureCodexHooksJsonSessionStart)
+ * Ensure Codex hooks.json contains exactly one managed SessionStart
+ * gsd-check-update hook entry, while preserving user-owned entries.
+ *
+ * Codex accepts hook config from hooks.json and config.toml. To avoid the
+ * startup warning for mixed representations in the same layer, GSD now stores
+ * the managed SessionStart hook in hooks.json and keeps config.toml for
+ * feature flags / agent metadata only.
+ *
+ * Supports both known hooks.json shapes:
+ *   1) { "SessionStart": [...] }
+ *   2) { "hooks": { "SessionStart": [...] } }
+ *
+ * On Windows, writes a .cmd shim ... (#3426)
+ * #772: also emits `commandWindows` ... Codex dispatches `commandWindows` on
+ * Windows and `command` on other platforms (HookHandlerConfig in
+ * codex-rs/config/src/hook_config.rs).
+
+PATH: path.join(targetDir,'hooks.json') where targetDir = the resolved Codex
+config root — $CODEX_HOME if set, else ~/.codex (install.js:3931, :13923).
+  => ~/.codex/hooks.json   (global) ; local install uses the local .codex root.
+Hook scripts land in  <codexRoot>/hooks/*.js .
+
+### 8b. EXACT JSON SCHEMA WRITTEN
+$P/gsd-core/bin/lib/runtime-hooks-surface.cjs:926-936
+  if (managedCommand) {
+      const hookEntry = { type: 'command', command: managedCommand };
+      if (commandWindows) hookEntry['commandWindows'] = commandWindows;
+      if (timeout !== undefined) hookEntry['timeout'] = timeout;
+      const newEntry = { hooks: [hookEntry] };
+      if (matcher !== undefined) newEntry['matcher'] = matcher;
+      sanitizedEntries.push(newEntry);
+  }
+Canonical on-disk shape (always the NESTED form, :873-891):
+  {
+    "hooks": {
+      "SessionStart": [
+        { "hooks": [ { "type": "command",
+                       "command": "\"/abs/node\" \"/home/u/.codex/hooks/gsd-check-update.js\"",
+                       "commandWindows": "\"C:/Users/u/.codex/hooks/gsd-check-update.cmd\"" } ] }
+      ]
+    }
+  }
+
+### 8c. RECONCILER BEHAVIOUR — foreign entries preserved
+$P/gsd-core/bin/lib/runtime-hooks-surface.cjs:819-959 reconcileCodexHooksJsonEvent
+  :838-855  symlink guard (GSD_ALLOW_SYMLINKED_DEST opt-in) before read/write
+  :866      throws on unparseable hooks.json (never silently overwrites)
+  :872-891  #1348: canonicalize to nested {hooks:{<Event>:[...]}}; ANY top-level
+            event array is LIFTED and MERGED into the nested table so
+            "user/legacy entries are preserved under `hooks` and no stray
+            top-level event key survives (Codex deny_unknown_fields rejects them)"
+  :910-920  keptHooks = originalHooks.filter(hook => !isManagedHookCommand(
+              hook.command, {surface:'codex-hooks-json', includeLegacyAliases:true,
+              configDir: targetDir}))       <-- ONLY GSD-shaped commands removed
+  :898,:940-947  an event key the user already had as an EMPTY array survives
+            as an empty array; only OUR-emptied arrays are deleted
+  :953-957  atomic write only when content actually changes
+
+### 8d. WHICH CODEX EVENT NAMES
+$P/bin/install.js:152-171
+  // Codex hooks.json lifecycle events GSD registers beyond SessionStart ...
+  // This is Codex's OWN hook-event vocabulary (per
+  // developers.openai.com/codex/config-reference) ...
+  const CODEX_EXTENDED_HOOK_EVENTS = [
+    'SubagentStart','Stop','PostToolUse','PreToolUse','PermissionRequest',
+    'PreCompact','PostCompact','SubagentStop','UserPromptSubmit' ];
+
+  ==> SubagentStop IS in Codex's documented vocabulary. BUT:
+
+$P/bin/install.js:12538-12557 (the INSTALL path)
+  // ── Codex extended hook events (#772, #2088) — REMOVED by #2586 ──────
+  // gsd-context-monitor.js is no longer copied or registered for Codex ...
+  // every one of these events was a guaranteed silent no-op, since the metrics
+  // bridge file it reads is only ever written by Claude's own statusline hook.
+  // Every event in CODEX_EXTENDED_HOOK_EVENTS is unconditionally reconciled
+  // here — not gated on the script existing — so a pre-#2586 install's stale
+  // registrations ... are stripped on reinstall.
+  for (const codexEvent of CODEX_EXTENDED_HOOK_EVENTS) {
+    const eventCleanup = removeCodexHooksJsonEvent(targetDir, codexEvent);
+    ...
+  }
+$P/bin/install.js:12318-12329
+  // #2586: gsd-context-monitor.js is deliberately NOT copied for Codex.
+  const CODEX_HOOKS_TO_COPY = [ 'gsd-check-update.js',
+    'gsd-check-update-worker.js', 'managed-hooks-registry.cjs' ];
+$P/bin/install.js:1372-1379 (removeCodexHooksJsonEvent doc)
+  // GSD no longer ADDS entries for these events ... only removes recognized
+  // ones, so the `ensureCodexHooksJsonEvent` wrapper that used to add them was
+  // removed as dead code.
+$P/bin/install.js:12536 (install-time console line)
+  "Codex: agent-facing context warnings and GSD phase/lifecycle display are
+   unsupported (Codex's hook payload has no context-usage metric)"
+
+  ==> EFFECTIVE CODEX COVERAGE IN 1.14.0 = **SessionStart ONLY**.
+      All nine extended events are actively REMOVED on every install/reinstall.
+      Registration site: install.js:12512-12528, gated on
+      hasEnabledCodexHooksFeature(configContent).
+
+### 8e. config.toml's remaining role
+$P/bin/install.js:130-184
+  GSD_CODEX_MARKER = '# GSD Agent Configuration — managed by gsd-core installer'
+  GSD_CODEX_HOOKS_OWNERSHIP_PREFIX = '# GSD codex_hooks ownership: '
+  CODEX_HOOKS_FEATURE_KEY = 'hooks'        // canonical [features] key (#3566)
+  CODEX_HOOKS_FEATURE_LEGACY_KEYS = ['codex_hooks']
+  GSD_CODEX_AGENTS_MAX_DEPTH = 1           // [agents] max_depth (ADR-1239 #2088)
+Written: install.js:6691 `[features]\nhooks = true\n`; agent .toml metadata.
+Legacy TOML hook block builder still exists but is only used for legacy
+migration/repair: runtime-hooks-surface.cjs:764-782 buildCodexHookBlock ->
+  "\n# GSD Hooks\n[[hooks.SessionStart]]\n\n[[hooks.SessionStart.hooks]]\n
+   type = \"command\"\ncommand = \"<cmd>\"\n"
+install.js:5438 migrates legacy flat [hooks] -> [[hooks.<Event>]] AoT;
+install.js:6182-6188 schema check rejects flat [[hooks]] ("invalid in Codex
+0.124.0+ (expected [[hooks.<Event>]] namespaced form)").
+
+--------------------------------------------------------------------------------
+[9] OPENCODE ADAPTER MECHANICS (QUESTION B)
+--------------------------------------------------------------------------------
+### 9a. PLUGIN DIRECTORY + FILE NAME (descriptor-driven)
+$P/gsd-core/bin/lib/capability-registry.cjs:3059-3070 (opencode runtime.hostBehaviors)
+  "combinedFamilyInstall": true,
+  "frontmatterDialect": "opencode",
+  "nativePlugin": { "dir": "plugins", "file": "gsd-core.js",
+                    "source": ".opencode/plugins/gsd-core.js" },
+  "skipHomePrefixSubstitution": true, "skipSettingsUi": true,
+  "skipUpdateBannerCommand": true, "skipCodexSkillsManifest": true
+(kilo :2182-2186 identical dir/file; pi :3246-3250 -> extensions/gsd.js)
+
+Config root: $P/bin/install.js:9373-9377
+  // For local installs, use ./.opencode/
+  // For global installs, use ~/.config/opencode/
+  const opencodeConfigDir = configDir || (isGlobal
+    ? getGlobalConfigDir('opencode', explicitConfigDir)
+    : path.join(process.cwd(), '.opencode'));
+  (env override OPENCODE_CONFIG_DIR; install.js:13364 "OpenCode (~/.config/opencode)")
+
+  ==> GLOBAL: ~/.config/opencode/plugins/gsd-core.js
+      LOCAL:  <project>/.opencode/plugins/gsd-core.js
+      NOTE the dir is "plugins" (plural) — source is $P/.opencode/plugins/gsd-core.js
+      (794 lines, `module.exports = gsdCorePluginExport` at :794).
+
+### 9b. CommonJS-vs-ESM MARKER — CURRENT STATE IN 1.14.0
+STILL WRITTEN, but scoped to the PLUGIN DIR, never the config root.
+
+$P/gsd-core/bin/lib/install-engine.cjs:1708-1750 _installNativePluginIfDeclared
+  :1721  const destPath = assertDestWithinConfigHome(configDir,
+                            path.join(np.dir, np.file));
+  :1722-1723  mkdirSync(dirname(destPath),{recursive:true}); copyFileSync(pluginSrc,destPath);
+  :1724-1735  // #2544: the staged adapter is a `.js` file ... It used to find the
+              // marker the installer wrote at the config root — the write that
+              // clobbered user-authored files. Pin it from the plugin's own
+              // directory instead, leaving the config root alone. ...
+  :1736  const markerOutcome = ensureCommonJsMarker(path.dirname(destPath));
+  :1737-1740  if 'preserved-foreign' -> warn "<dir>/package.json is not GSD's
+              CommonJS marker — left untouched. If it declares \"type\":
+              \"module\", <file> will not load."
+  :1741-1747  if 'failed' -> warn, continue (never fatal)
+
+$P/gsd-core/bin/lib/commonjs-marker.cjs (142 lines)
+  :18   pins them to CommonJS by writing a minimal `{"type":"commonjs"}` marker
+  :23-27 RULE 1 "Write only where GSD owns the contents ... never at the
+         runtime's shared config root, which on OpenCode and Kilo is documented,
+         user-writable territory for declaring local-plugin npm dependencies."
+  :29-35 RULE 2 "Never overwrite a file GSD did not write."
+  :49   exports.COMMONJS_MARKER = '{"type":"commonjs"}';
+  :51   exports.COMMONJS_MARKER_CONTENT = `${COMMONJS_MARKER}\n`;
+  :53-55 markerPathFor(dir) = path.join(dir,'package.json')
+  :65-90 classifyMarker(dir): lstat (not existsSync — dangling symlink safety);
+         non-regular-file => 'foreign'; unreadable => 'foreign' (fail-closed);
+         content.trim()===MARKER ? 'gsd-owned' : 'foreign'
+  :108-127 ensureCommonJsMarker(dir): 'foreign'->'preserved-foreign';
+         'gsd-owned'->'unchanged'; else writeFileSync(..., {flag:'wx'})
+         (exclusive create closes the classify->write TOCTOU); EEXIST ->
+         'preserved-foreign'; any other error -> 'failed'. NEVER THROWS.
+  :132-142 removeCommonJsMarker(dir): unlink only when 'gsd-owned'.
+
+  ==> so in 1.14.0 the marker exists at:
+        <opencodeRoot>/plugins/package.json  == {"type":"commonjs"}
+        <configRoot>/hooks/package.json      == {"type":"commonjs"}
+      and NOT at <configRoot>/package.json .
+
+### 9c. THE RETIREMENT MIGRATION — RETIRED, SHIPPED, LIVE
+$P/gsd-core/bin/lib/installer-migrations/007-retire-config-root-commonjs-marker.cjs
+  :99   id: '2026-07-28-retire-config-root-commonjs-marker',
+  :100  title: 'Retire the pre-#2544 config-root CommonJS marker',
+  :101-103 description: 'Remove <configRoot>/package.json when it is exactly the
+        {"type":"commonjs"} marker pre-#2544 installs wrote there, now superseded
+        by markers scoped to the directories GSD owns. A package.json with any
+        other content is left untouched.',
+  :104  introducedIn: '1.8.0',
+  :105  scopes: ['global','local'],
+  :106  destructive: true,
+  :83   const STALE_ROOT_MARKER = 'package.json';
+  :91   const LEGACY_MARKER_CONTENT = '{"type":"commonjs"}';
+  :84-90 (comment) duplicated as a literal on purpose — "a migration record is a
+         frozen historical statement about what a PAST version installed"
+  :107-152 plan(ctx): lstat(configDir/package.json); non-file -> []; unreadable
+         -> [] (fail-closed); content.trim() !== LEGACY_MARKER_CONTENT -> [];
+         else emit { type:'remove-managed', relPath:'package.json',
+                     reason, ownershipEvidence, (declared classification) }
+  :3-17  "Before #2544, installSharedHooksBundle(destRootDir) wrote
+         {\"type\":\"commonjs\"} there unconditionally ... #2544 moved that
+         marker into the directories GSD actually fills (hooks/, and the
+         nativePlugin.dir ...) and stopped writing the config root at all."
+  :47-56 affects antigravity, augment, claude, claude-local, codebuddy, hermes,
+         qwen, kilo, opencode, pi (`runtimes` field omitted = all)
+  :58-66 CARVE-OUT: kimi's ~/.kimi marker is retired by install.js's
+         `kimi-hooks-toml` branch instead (outside migration configDir confinement)
+
+  Corroborating: $P/bin/install.js:12695
+    // used to write {"type":"commonjs"} at destRootDir itself; it now writes it
+  $P/gsd-core/bin/lib/runtime-hooks-surface.cjs:216
+    // (bin/install.js installSharedHooksBundle): {"type":"commonjs"}\n.
+
+  ==> ANSWER: the CONFIG-ROOT marker is RETIRED (since 1.8.0, migration 007
+      actively deletes it). The PLUGIN-DIR / hooks-DIR marker is STILL WRITTEN.
+
+### 9d. OPENCODE EVENT WIRING (the actual plugin, $P/.opencode/plugins/gsd-core.js)
+  :8    "Translates OpenCode plugin events into Claude Code hook payloads"
+  :455  const GsdCorePlugin = async ({ directory } = {}) => {
+  :463  config: async (config) => { ... }
+  :509  "shell.env": async (_input, output) => { ... }
+  :515  "tool.execute.before"  -> hook_event_name: "PreToolUse"        (:538)
+  :594  "tool.execute.after"   -> hook_event_name: "PostToolUse"       (:622,:641)
+  :653  "experimental.session.compacting" -> hook_event_name:"PreCompact" (:656)
+  :671  event: async ({ event }) => {
+  :673    session.created  -> hook_event_name:"SessionStart"           (:684,:690)
+  :698    file.edited      -> hook_event_name:"FileChanged" (event:"change") (:707-709)
+  :726    session.idle     -> "Claude Stop lifecycle point (#1682 Slice 1b/c)"
+  :738    permission.asked / permission.replied -> recognized, no GSD action
+  :746    session.error    -> recognized, no GSD action
+        }
+  :757-769 defensive export shape notes (OpenCode THROWS
+        TypeError("Plugin export is not a function") on a bad shape)
+  :794  module.exports = gsdCorePluginExport;
+  hooksSurface for opencode/kilo is 'none' -> applySettingsJsonHooks SKIPS them
+  entirely (runtime-hooks-surface.cjs:2020-2024, :2031).
+
+--------------------------------------------------------------------------------
+[10] UPSTREAM REPO / DOCS — PUBLIC, AND ADR-1239 IS REAL
+--------------------------------------------------------------------------------
+$ curl -sL https://api.github.com/repos/open-gsd/gsd-core
+  "full_name":"open-gsd/gsd-core", "private": false, default ref appears to be `next`
+$ curl -sL .../contents/docs/adr        -> HTTP 200, full ADR listing (ref=next)
+$ curl -sL .../raw/v1.14.0/docs/INVENTORY.md -> HTTP 200
+$ curl -sL .../raw/{v1.14.0,next,main}/docs/adr/1239-gsd-embeddable-orchestration-engine.md
+  -> HTTP 200, 435 lines, IDENTICAL across all three refs.
+$ curl -sL .../raw/next/docs/reference/host-integration-capability-matrix.md -> 891 lines
+
+Relevant docs in the v1.14.0 tree (git trees API, recursive):
+  docs/adr/1239-gsd-embeddable-orchestration-engine.md
+  docs/explanation/embeddable-orchestration-system.md
+  docs/features/{embeddable-orchestration-system-host-integration-interface,
+                 hook-system, community-hooks-opt-in, hooks-declare-their-crash-policy}.md
+  docs/how-to/{author-a-host-plugin, add-or-update-a-host-integration,
+               declare-a-hook-crash-policy}.md
+  docs/reference/{host-integration-interface, host-integration-capability-matrix}.md
+  docs/tutorials/embed-gsd-in-a-new-host.md
+
+### ADR-1239 verbatim excerpts (docs/adr/1239-...md @ v1.14.0)
+  Header: "Status: Accepted / Date: 2026-06-14 / Issue: #1239 / Epic: #857"
+  "Distinct from: #956 (third-party *feature* plugins / Connected Capabilities)"
+
+  Six interface points: 1 Command/workflow invocation, 2 Agent dispatch,
+  3 Model invocation, 4 Lifecycle hooks (`hookEvents`/`hooksSurface`/
+  `extendedHookEvents`), 5 State+config IO, 6 Artifact surface.
+  Decision: "Define a Host-Integration Interface ... Third-party loading is
+  purely additive (opt-in loader + trust gate over the descriptor: schema
+  validation + configHome write-confinement)."
+
+  "`hookBus`: `host` (host fires events GSD subscribes to: Gemini/Cursor/Hermes/
+  Codex/pi/OpenCode) | `engine` (host has no bus -> GSD owns it internally and
+  fires its own: VS Code) | `none` ... Plus the portable event floor
+  (SessionStart/PreToolUse/PostToolUse/Stop/SessionEnd — the 'claude dialect'
+  all hook-capable hosts share) and negotiated extended events."
+
+  "The primitive vocabulary stays closed and first-party (ADR-857 Decision 8):
+  a host needing a novel primitive needs a *first-party* primitive; the
+  negotiation surfaces 'unsupported' rather than letting a descriptor inject
+  code. (Third-party *code* contributions are #956.)"
+
+  Amendment "Phase A implemented (#1684, v1.7.0)":
+  "No consumer wires the negotiated result yet — Phase A is interface-definition
+   only; the engine<->host boundary (Phase B) and the adapters (Phase C) are
+   where it is consumed."
+  (Header text also claims "Phases B–E have landed ... Status flipped from
+   Proposed once Phase E shipped the published SDK + serialized handshake +
+   versioning policy + Diátaxis docs".)
+
+  Amendment #1943: "`extensionEvents` is the *plugin/extension-system* event
+  surface an imperative host exposes: { opencode, pi, none }; `hookEvents` is
+  the *managed-hook* dialect only (claude/gemini)".
+
+### docs/how-to/author-a-host-plugin.md (v1.14.0, 79 lines) — key claims
+  "This guide is for **external tool authors** who want to embed GSD's
+   orchestration loop (dispatch + hooks + model + state) into a new host ...
+   by writing a **host-plugin** against the published Host-Integration SDK,
+   **without modifying gsd-core source**."
+  "The contract is the SDK entry (src/host-integration-sdk.cts ->
+   gsd-core/bin/lib/host-integration-sdk.cjs): import only from it."
+  §3: const SDK = require('@opengsd/gsd-core/sdk'); // the published entry
+      const hookBus = SDK.createHookBus({ bus: 'engine' });
+  §5: "Map the six interface points ... to your host's primitives"
+  ==> the doc's require path DOES NOT RESOLVE in the published 1.14.0 tarball
+      (see [3f]). The guide is about EMBEDDING GSD IN A NEW HOST, i.e. becoming
+      the host — NOT about a third party observing a GSD install already
+      running inside Claude Code / Codex / OpenCode.
+
+### docs/reference/host-integration-interface.md (93 lines) — adapter table
+  | Hook bus | `createHookBus({bus}, {hostEmit?})` | `hookBus` ('host' needs a host `hostEmit`) |
+  Profiles (:80-86): programmatic-cli / declarative-cli / ide baselines.
+  Nothing in this reference names a GSD-domain lifecycle event.
+
+--------------------------------------------------------------------------------
+[11] THIRD-PARTY CAPABILITY SYSTEM (adjacent, NOT an event seam)
+--------------------------------------------------------------------------------
+$ node $P/gsd-core/bin/gsd-tools.cjs capability
+  Error: Unknown capability subcommand: undefined.
+  Available: install, update, remove, list, outdated, trust, disable, enable, state, set
+$ node $P/gsd-core/bin/gsd-tools.cjs capability list   (works; 100+ first-party caps)
+  [{"id":"ai-integration","role":"feature","version":"1.14.0","tier":"full",
+    "source":"first-party","scope":"first-party","status":"active",
+    "surfaced":true,"title":"AI design contract"}, ... ]
+
+Overlay load paths — $P/gsd-core/bin/lib/capability-loader.cjs:12-13
+  *   - global:  $GSD_HOME/.gsd/capabilities/<id>/capability.json  (GSD_HOME defaults to ~)
+  *   - project: <projectRoot>/.gsd/capabilities/<id>/capability.json
+  :246  const globalDir  = path.join(home, GSD_HOME_DIRNAME, 'capabilities');
+  :257  const projectDir = path.join(projectRoot, GSD_HOME_DIRNAME, 'capabilities');
+  :678  "Reserved namespace — third-party may not impersonate first-party."
+  :844  skip+warn an installed third-party descriptor whose declared ... 
+  :553,:843 ADR-1239 Phase C-2 (#1681): load-time configHome confinement
+Trust gate: $P/gsd-core/bin/lib/external-descriptor-trust.cjs (ADR-1239 Phase C-2)
+Bounded manifest reads: $P/gsd-core/bin/lib/capability-source.cjs:54-60, :292-321
+
+  ==> a third-party capability.json is DATA (commands/skills/agents/artifacts
+      + install layout), gated by a trust/consent ledger. It carries no
+      subscriber/emitter field: there is no descriptor key that registers a
+      callback against a GSD lifecycle event. ADR-1239 explicitly states the
+      primitive vocabulary "stays closed and first-party".
+
+--------------------------------------------------------------------------------
+[12] GSD'S OWN "PHASE BOUNDARY" HOOK IS NOT AN EVENT — IT IS A FILE-WRITE SNIFFER
+--------------------------------------------------------------------------------
+$P/hooks/gsd-phase-boundary.sh (60 lines)
+  :3  "# gsd-phase-boundary.sh — PostToolUse hook: detect .planning/ file writes"
+  :4  "# Outputs a reminder when planning files are modified outside normal workflow."
+  :7-8 "# OPT-IN: This hook is a no-op unless config.json has hooks.community: true."
+  :13  ENABLED=$(node -e "...c.hooks?.community===true?'1':'0'...")
+  :33  FILE=$(... tool_input.path || tool_input.file_path ...)
+  :40+ if [[ "$FILE" == *.planning/* ]] then PLANNING_MODIFIED=true; emit
+       additionalContext JSON envelope (#2974)
+Registered (live install) as PostToolUse matcher "Write|Edit", timeout 5.
+
+  ==> "phase boundary" in GSD 1.14.0 = a harness PostToolUse hook that greps the
+      written path for `.planning/`. There is no phase-transition event, no
+      plan-start/stop event, and no subagent-dispatch event emitted by GSD.
+      Nearest proxies a third party could observe today:
+        - harness SubagentStop / PreToolUse(matcher Agent|Task) for dispatch
+        - file writes under .planning/ (STATE.md, config.json) for phase moves
+        - harness SessionStart / Stop / PreCompact for session boundaries
+
+================================================================================
+END OF CAPTURE
+================================================================================

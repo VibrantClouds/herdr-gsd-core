@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0003-unified-edit-in-place-page.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0003: One unified, reorderable, edit-in-place character page",
+  "summary": "Consolidate all character information on one scrollable page with edit-in-place fields, drag-drop reordering, and autosave to IndexedDB.",
+  "scope": ["character page", "edit-in-place editing", "drag-and-drop reordering", "autosave", "IndexedDB", "sub-documents", "view mode", "share page", "print"],
+  "cross_refs": ["SPEC-frontend-architecture.md", "SPEC-subdocument-plugin-contract.md"],
+  "locked": true,
+  "precedence": null
+}

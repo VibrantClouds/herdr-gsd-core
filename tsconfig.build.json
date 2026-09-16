@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/herdr-client" },
+    { "path": "packages/daemon" },
+    { "path": "packages/cli" },
+    { "path": "packages/dashboard" },
+    { "path": "packages/adapters/claude-code" },
+    { "path": "packages/adapters/codex" },
+    { "path": "packages/adapters/opencode" },
+    { "path": "test/fake-herdr" }
+  ]
+}

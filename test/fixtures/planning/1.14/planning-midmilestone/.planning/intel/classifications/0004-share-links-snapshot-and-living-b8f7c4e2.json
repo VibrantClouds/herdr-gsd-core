@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0004-share-links-snapshot-and-living.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0004: Two share-link kinds, snapshot and living, with per-share section selection and no expiry",
+  "summary": "Adopts two share-link kinds (snapshot, living), with per-section selection and no expiry.",
+  "scope": ["share links", "snapshot", "living", "section selection", "storage"],
+  "cross_refs": ["SPEC-share-api.md", "SPEC-storage-s3.md", "ADR-0005", "ADR-0012"],
+  "locked": true,
+  "precedence": null
+}

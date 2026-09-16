@@ -1,0 +1,53 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1.0",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Foundation + Library",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Intimacy Plugin & Unified Page",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Snapshot Share End-to-End",
+      "status": "complete"
+    },
+    {
+      "number": "4",
+      "name": "Images",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Living Shares",
+      "status": "pending"
+    },
+    {
+      "number": "6",
+      "name": "Print & Selection UI",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "Backup & Hardening",
+      "status": "pending"
+    },
+    {
+      "number": "8",
+      "name": "Second-Generation Plugins",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step (plan phase 4)",
+    "reason": "Phase 4 of 8 — needs a plan"
+  },
+  "updated_at": "2026-09-16T01:45:41.473Z"
+}

@@ -1,0 +1,50 @@
+{
+  "situation": "planning",
+  "recommended": "progress-next",
+  "summary": "Phase 7 of 6 — needs a plan",
+  "signals": {
+    "current_phase": "7",
+    "total_phases": 6,
+    "status": "planning",
+    "progress": 0,
+    "has_planning": true,
+    "has_roadmap": true,
+    "git_dirty": true,
+    "git_unpushed": false,
+    "paused": false,
+    "blockers": [],
+    "has_git": true,
+    "verify_failed": false,
+    "stale_activity": false,
+    "roadmap_total_phases": 12,
+    "roadmap_completed_phases": 6,
+    "state_commits_behind": null,
+    "state_commit_stale": null
+  },
+  "actions": [
+    {
+      "id": "progress-next",
+      "label": "Advance to the next step (plan phase 7)",
+      "command": "/gsd:progress --next",
+      "recommended": true
+    },
+    {
+      "id": "plan-phase",
+      "label": "Plan phase 7",
+      "command": "/gsd:plan-phase",
+      "recommended": false
+    },
+    {
+      "id": "discuss-phase",
+      "label": "Discuss before planning",
+      "command": "/gsd:discuss-phase",
+      "recommended": false
+    },
+    {
+      "id": "progress",
+      "label": "Show progress",
+      "command": "/gsd:progress",
+      "recommended": false
+    }
+  ]
+}

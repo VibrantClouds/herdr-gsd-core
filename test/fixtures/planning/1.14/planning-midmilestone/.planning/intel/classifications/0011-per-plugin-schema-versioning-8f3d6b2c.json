@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0011-per-plugin-schema-versioning.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0011: Per-sub-document-type schema versions with a thin envelope version, mirroring SizeLab's migration policy",
+  "summary": "Adopt per-plugin schema versions with thin envelope covering CharacterCore and SubDocument wrapper, following SizeLab's proven migration policy.",
+  "scope": ["schema versioning", "sub-document types", "plugin versioning", "migrations", "CharacterCore", "envelope version", "versions registry", "fixtures"],
+  "cross_refs": ["SPEC-serialization-policy.md", ".claude/rules/state-serialization.md"],
+  "locked": true,
+  "precedence": null
+}

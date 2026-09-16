@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0006-privacy-unguessable-id-plaintext-s3.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0006: Privacy is an unguessable id; objects are stored in plaintext in S3",
+  "summary": "Shares protected by unguessable ID with plaintext S3 storage; no client-side encryption; privacy by obscurity.",
+  "scope": ["privacy", "S3 storage", "plaintext objects", "unguessable ID", "encryption", "share links"],
+  "cross_refs": ["0004-share-links-snapshot-and-living.md", "ADR-0013", "SPEC-storage-s3.md", "SPEC-security-and-abuse.md"],
+  "locked": true,
+  "precedence": null
+}

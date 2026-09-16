@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-share-api.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "Share API",
+  "summary": "HTTP API contract for share publishing, updates, retrieval, and image uploads with rate limiting.",
+  "scope": ["Share API", "HTTP endpoints", "authentication", "owner tokens", "images", "rate limiting"],
+  "cross_refs": ["SPEC-serialization-policy.md", "0004-share-links-snapshot-and-living.md", "0005-owner-token-owner-link-no-accounts.md", "0006-privacy-unguessable-id-plaintext-s3.md", "0007-backend-node-typescript-railway-s3.md", "0010-json-gzip-payload-encoding.md", "SPEC-storage-s3.md", "SPEC-security-and-abuse.md", "0012-content-addressed-images-no-gc.md", "SPEC-domain-model.md"],
+  "locked": false,
+  "precedence": null
+}

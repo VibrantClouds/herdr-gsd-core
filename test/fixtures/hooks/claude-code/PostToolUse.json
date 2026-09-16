@@ -1,0 +1,18 @@
+{
+  "session_id": "a1b2c3d4-0001-4a11-8f00-000000000001",
+  "transcript_path": "/home/user/.claude/projects/-home-user-myproj/a1b2c3d4-0001-4a11-8f00-000000000001.jsonl",
+  "cwd": "/home/user/myproj",
+  "hook_event_name": "PostToolUse",
+  "permission_mode": "default",
+  "tool_name": "Edit",
+  "tool_use_id": "toolu_01EDITRESULT0001",
+  "tool_input": {
+    "file_path": "/home/user/myproj/src/auth/login.ts",
+    "old_string": "const ok = true;",
+    "new_string": "const ok = validate(token);"
+  },
+  "tool_response": {
+    "filePath": "/home/user/myproj/src/auth/login.ts",
+    "success": true
+  }
+}

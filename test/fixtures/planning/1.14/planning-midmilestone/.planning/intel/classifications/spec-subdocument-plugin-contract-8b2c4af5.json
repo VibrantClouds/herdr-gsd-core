@@ -1,0 +1,13 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-subdocument-plugin-contract.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Sub-Document Plugin Contract",
+  "summary": "Defines the contract and interface split for sub-document plugins, covering schema and UI halves with their responsibilities, rules, and implementation checklist.",
+  "scope": ["sub-document plugin", "plugin contract", "schema half", "UI half", "Angular editor", "plugin registry", "TypeScript interfaces"],
+  "cross_refs": ["SPEC-serialization-policy.md", "SPEC-design-system.md"],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}

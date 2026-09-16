@@ -1,0 +1,51 @@
+{
+  "name": "herdr-gsd-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Herdr plugin that observes GSD-Core projects (.planning) and projects their state into Herdr sidebar tokens, notifications and a dashboard pane.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/herdr-client",
+    "packages/daemon",
+    "packages/cli",
+    "packages/dashboard",
+    "packages/adapters/claude-code",
+    "packages/adapters/codex",
+    "packages/adapters/opencode",
+    "test/fake-herdr"
+  ],
+  "scripts": {
+    "build": "node scripts/copy-shared.cjs && tsc -b tsconfig.build.json && node scripts/bundle-hooks.cjs",
+    "clean": "node scripts/clean.cjs",
+    "check:shared": "node scripts/copy-shared.cjs --check",
+    "test": "node scripts/run-tests.cjs",
+    "test:core": "node --test --experimental-test-coverage --test-coverage-include=\"packages/core/dist/**/*.js\" --test-coverage-exclude=\"**/*.test.js\" --test-coverage-branches=95 packages/core/dist/*.test.js",
+    "verify:m0": "node scripts/verify-m0.cjs",
+    "verify:m1": "node scripts/verify-m1.cjs",
+    "verify:m2": "node scripts/verify-m2.cjs",
+    "verify:m3": "node scripts/verify-m3.cjs",
+    "verify": "npm run verify:m0 && npm run verify:m1 && npm run verify:m2 && npm run verify:m3 && npm run verify:m4 && npm run verify:m5",
+    "verify:m4": "node scripts/verify-m4.cjs",
+    "verify:m5": "node scripts/verify-m5.cjs",
+    "e2e:herdr": "node scripts/e2e-herdr.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.3",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "herdr",
+    "herdr-plugin",
+    "gsd",
+    "gsd-core",
+    "claude-code"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VibrantClouds/herdr-gsd-core.git"
+  }
+}

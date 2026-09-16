@@ -1,0 +1,93 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  # Pinned per docs/COMPAT.md; bump only with a spike (spec §12.4).
+  HERDR_VERSION: "0.9.0"
+  GSD_CORE_VERSION: "1.14.0"
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Herdr ${{ env.HERDR_VERSION }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$(uname -s)-$(uname -m)" in
+            Linux-x86_64)  asset=herdr-linux-x86_64 ;;
+            Linux-aarch64) asset=herdr-linux-aarch64 ;;
+            Darwin-arm64)  asset=herdr-macos-aarch64 ;;
+            Darwin-x86_64) asset=herdr-macos-x86_64 ;;
+            *) echo "unsupported runner $(uname -s)-$(uname -m)"; exit 1 ;;
+          esac
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/herdr" "https://github.com/herdrdev/herdr/releases/download/v${HERDR_VERSION}/${asset}"
+          chmod +x "$HOME/.local/bin/herdr"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/herdr" --version
+
+      - name: Install GSD-Core ${{ env.GSD_CORE_VERSION }} (gsd-tools enrichment)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Non-interactive global install into its own config root; the plugin resolves
+          # ~/.claude-gsd/gsd-core/bin/gsd-tools.cjs (packages/core/src/tools.ts). Failure here is
+          # tolerated: the plugin's contract is filesystem-first and every gate passes without gsd-tools.
+          npx --yes "@opengsd/gsd-core@${GSD_CORE_VERSION}" --claude --global --config-dir "$HOME/.claude-gsd" --no-legacy-cleanup </dev/null \
+            || echo "::warning::GSD-Core install failed; running filesystem-only"
+          test -f "$HOME/.claude-gsd/gsd-core/bin/gsd-tools.cjs" && node "$HOME/.claude-gsd/gsd-core/bin/gsd-tools.cjs" runtime-identity || true
+
+      - name: Build (exactly what the plugin manifest runs)
+        run: |
+          npm ci
+          npm run build
+
+      - name: Unit + fake-Herdr tests
+        run: npm test
+
+      - name: Milestone gates M0–M4
+        run: npm run verify:m0 && npm run verify:m1 && npm run verify:m2 && npm run verify:m3 && npm run verify:m4
+
+      - name: M5 gate (includes the real-Herdr e2e in a headless `--session`)
+        env:
+          E2E_SESSION: ci
+        run: npm run verify:m5
+
+      - name: Plugin install from a clean checkout (herdr plugin install owner/repo --yes)
+        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        shell: bash
+        run: |
+          set -euo pipefail
+          herdr --session ci-install server >/tmp/herdr-ci-install.log 2>&1 &
+          for i in $(seq 1 40); do herdr --session ci-install api snapshot >/dev/null 2>&1 && break; sleep 0.5; done
+          herdr --session ci-install plugin install "${GITHUB_REPOSITORY}" --yes --ref "${GITHUB_SHA}"
+          herdr --session ci-install plugin list
+          herdr --session ci-install plugin list | grep -q herdr-gsd-core
+          herdr session stop ci-install || true
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.os }}
+          path: |
+            ~/.config/herdr/sessions/*/herdr-server.log
+            /tmp/herdr-ci-install.log
+          if-no-files-found: ignore

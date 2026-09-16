@@ -1,0 +1,70 @@
+# M0-G capture: GSD-Core 1.14.0 STATE.md / ROADMAP.md parsers (verbatim from the spike doc)
+# Source files are all under <pkg>/gsd-core/bin/lib/.
+
+### 2.4 Markdown fallback — GSD's own regexes
+
+Canonical path set (`planning-workspace.cjs:331-338`): `planning`, `state=STATE.md`,
+`roadmap=ROADMAP.md`, `project=PROJECT.md`, `config=config.json`, `phases=phases/`,
+`requirements=REQUIREMENTS.md`.
+
+**Field extraction** — `state-document.cjs:397` `stateExtractField(content, field)`,
+tried in this order (`escaped` = regex-escaped field name):
+
+```js
+/^[ \t]*\*\*<Field>:\*\*[ \t]*(.+)/im     // **Field:** value
+/^<Field>:[ \t]*(.+)/im                   // Field: value
+locateFieldRow(content, field)            // | Field | value |  (separator rows excluded)
+```
+
+`stateFieldValue(fm, body, fmKey, bodyField)` (`:472`) owns the fallback ladder:
+non-empty frontmatter string → frontmatter number/bool → body field. Body `Phase:`
+canonically lives under `## Current Position` and must be sliced with
+`stateCurrentPositionSlice` (`:511`, h2 **or** h3, case-insensitive, exact text) — an
+unscoped match lets an archive section shadow the real one. (`smart-entry` reads
+*unscoped* on purpose; a documented divergence, not a bug to copy.)
+
+**Status vocabulary** — `normalizeStateStatus(status, pausedAt)` (`:711`).
+`pausedAt` non-empty ⇒ `paused`, short-circuiting everything.
+`STATUS_EXACT_TOKENS` (`:637`, whole-value match on the lowercased, whitespace-collapsed value):
+
+```
+paused|stopped → paused                     discussing → discussing
+executing|in progress|ready to execute → executing      verifying → verifying
+planning|ready to plan|planning complete → planning
+completed|done|complete|phase complete|all phases complete|milestone complete → completed
+"phase complete — ready for verification" → verifying          unknown → unknown
+```
+
+`STATUS_ANCHORED_PATTERNS` (`:676`, also whole-value):
+`/^executing phase\s+\S+$/`, `/^planning phase\s+\S+$/`, `/^verifying phase\s+\S+$/`,
+`/^phase\s+\S+\s+complete$/`, `/^\S+\s+milestone complete$/`, `/^complete\s*[✓✔✅☑]?$/`.
+Anything else passes through **verbatim** (#4186 replaced substring matching precisely
+because prose containing a trigger word was being silently rewritten). **Match whole
+values only.**
+
+**Blockers** — `## Blockers` h2 section (`levelBounded`), items `/^-\s+(.+)$/gm`
+(`smart-entry.cjs`). Note real projects write `### Blockers/Concerns` under
+`## Accumulated Context`, which this does **not** match — all three real fixtures
+report `blockers: []` despite listing blockers in prose. Known gap; do not "fix" it
+in the plugin without diverging from GSD.
+
+**ROADMAP Progress table** — `phase-lifecycle.cjs:58` `locateProgressTable`: scope to
+`/^##[ \t]+Progress\b/im` up to the next `#`/`##` heading (whole doc if no such
+heading), then `findTableWithColumns(scoped, ['Phase','Plans Complete','Status','Completed'])`
+— a header **superset** match, column-order and column-count invariant.
+`deriveProgressFromRoadmap` (`:82`) reads cells **by name**: `completedPhases` =
+rows where `/^complete$/i.test(Status)`; `totalPhases` = rows whose `Phase` cell
+starts with a digit and is not a sentinel (phase 0, 999.x); `totalPlans` = Σ of the
+denominator in `/(\d+)\s*\/\s*(\d+)/` over `Plans Complete`.
+
+Fallback when there is no Progress table (`state-contract.cjs`): the `## Phases`
+section only, bullets matching
+`/^[ \t]*[-*][ \t]+\[([ xX])\][ \t]+\*\*Phase[ \t]+(\d+(?:\.\d+)*)[ \t]*:?[ \t]*([^*\n]*)\*\*/gm`.
+`[x]` ⇒ `complete`; unchecked ⇒ `in_progress` iff it equals STATE.md's `current_phase`,
+else `pending`.
+
+**Locks** — `STATE.md.lock` (`state.cjs:3399`, `statePath + '.lock'`, body carries a
+pid; stale/dead-pid locks are stolen), plus `.planning/.lock`
+(`planning-workspace.cjs:362`) and `.planning/milestone.lock`
+(`milestone-lock.cjs:64`). **Spec §3.1 names only `STATE.md.lock` — watch all three.**
+

@@ -1,0 +1,50 @@
+{
+  "situation": "executing",
+  "recommended": "progress-next",
+  "summary": "Phase 02 of 3 · executing",
+  "signals": {
+    "current_phase": "02",
+    "total_phases": 3,
+    "status": "executing",
+    "progress": null,
+    "has_planning": true,
+    "has_roadmap": true,
+    "git_dirty": true,
+    "git_unpushed": false,
+    "paused": false,
+    "blockers": [],
+    "has_git": true,
+    "verify_failed": false,
+    "stale_activity": true,
+    "roadmap_total_phases": 6,
+    "roadmap_completed_phases": 1,
+    "state_commits_behind": null,
+    "state_commit_stale": null
+  },
+  "actions": [
+    {
+      "id": "progress-next",
+      "label": "Advance to the next step",
+      "command": "/gsd:progress --next",
+      "recommended": true
+    },
+    {
+      "id": "execute-phase",
+      "label": "Continue executing phase 02",
+      "command": "/gsd:execute-phase",
+      "recommended": false
+    },
+    {
+      "id": "quick",
+      "label": "Quick task",
+      "command": "/gsd:quick",
+      "recommended": false
+    },
+    {
+      "id": "code-review",
+      "label": "Review recent work",
+      "command": "/gsd:code-review",
+      "recommended": false
+    }
+  ]
+}

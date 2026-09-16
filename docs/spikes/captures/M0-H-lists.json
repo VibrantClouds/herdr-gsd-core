@@ -1,0 +1,564 @@
+{
+  "workspace_list": {
+    "id": "req_1",
+    "result": {
+      "type": "workspace_list",
+      "workspaces": [
+        {
+          "workspace_id": "w1",
+          "number": 1,
+          "label": "CharacterDossier",
+          "focused": false,
+          "pane_count": 1,
+          "tab_count": 1,
+          "active_tab_id": "w1:t1",
+          "agent_status": "working"
+        },
+        {
+          "workspace_id": "w2",
+          "number": 2,
+          "label": "SizeComparisonSite",
+          "focused": true,
+          "pane_count": 1,
+          "tab_count": 1,
+          "active_tab_id": "w2:t1",
+          "agent_status": "working"
+        },
+        {
+          "workspace_id": "w3",
+          "number": 3,
+          "label": "gsd-core-herdr",
+          "focused": false,
+          "pane_count": 1,
+          "tab_count": 1,
+          "active_tab_id": "w3:t1",
+          "agent_status": "blocked"
+        }
+      ]
+    }
+  },
+  "pane_list": {
+    "id": "req_2",
+    "result": {
+      "type": "pane_list",
+      "panes": [
+        {
+          "pane_id": "w1:p1",
+          "terminal_id": "term_65b8e8aad4c3a1",
+          "workspace_id": "w1",
+          "tab_id": "w1:t1",
+          "focused": false,
+          "cwd": "/home/vibrantclouds/Development/CharacterDossier",
+          "foreground_cwd": "/home/vibrantclouds/Development/CharacterDossier",
+          "agent": "claude",
+          "terminal_title": "◐ Character Dossier",
+          "terminal_title_stripped": "Character Dossier",
+          "agent_status": "working",
+          "scroll": {
+            "offset_from_bottom": 0,
+            "max_offset_from_bottom": 0,
+            "viewport_rows": 67
+          },
+          "revision": 3
+        },
+        {
+          "pane_id": "w2:p1",
+          "terminal_id": "term_65b8f9b8fc1142",
+          "workspace_id": "w2",
+          "tab_id": "w2:t1",
+          "focused": true,
+          "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+          "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+          "agent": "claude",
+          "terminal_title": "◑ Sizelab",
+          "terminal_title_stripped": "Sizelab",
+          "agent_status": "working",
+          "scroll": {
+            "offset_from_bottom": 0,
+            "max_offset_from_bottom": 0,
+            "viewport_rows": 67
+          },
+          "revision": 5
+        },
+        {
+          "pane_id": "w3:p1",
+          "terminal_id": "term_65b901fb2382d3",
+          "workspace_id": "w3",
+          "tab_id": "w3:t1",
+          "focused": false,
+          "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "agent": "claude",
+          "terminal_title": "✳ Implement spec.md",
+          "terminal_title_stripped": "Implement spec.md",
+          "agent_status": "blocked",
+          "agent_session": {
+            "source": "herdr:claude",
+            "agent": "claude",
+            "kind": "id",
+            "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+          },
+          "scroll": {
+            "offset_from_bottom": 0,
+            "max_offset_from_bottom": 0,
+            "viewport_rows": 67
+          },
+          "revision": 4
+        }
+      ]
+    }
+  },
+  "agent_list": {
+    "id": "req_3",
+    "result": {
+      "type": "agent_list",
+      "agents": [
+        {
+          "terminal_id": "term_65b8e8aad4c3a1",
+          "agent": "claude",
+          "terminal_title": "◐ Character Dossier",
+          "terminal_title_stripped": "Character Dossier",
+          "agent_status": "working",
+          "workspace_id": "w1",
+          "tab_id": "w1:t1",
+          "pane_id": "w1:p1",
+          "focused": false,
+          "state_change_seq": 76,
+          "cwd": "/home/vibrantclouds/Development/CharacterDossier",
+          "foreground_cwd": "/home/vibrantclouds/Development/CharacterDossier",
+          "revision": 3
+        },
+        {
+          "terminal_id": "term_65b8f9b8fc1142",
+          "agent": "claude",
+          "terminal_title": "◑ Sizelab",
+          "terminal_title_stripped": "Sizelab",
+          "agent_status": "working",
+          "workspace_id": "w2",
+          "tab_id": "w2:t1",
+          "pane_id": "w2:p1",
+          "focused": true,
+          "state_change_seq": 90,
+          "cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+          "foreground_cwd": "/home/vibrantclouds/Development/SizeComparisonSite",
+          "revision": 5
+        },
+        {
+          "terminal_id": "term_65b901fb2382d3",
+          "agent": "claude",
+          "terminal_title": "✳ Implement spec.md",
+          "terminal_title_stripped": "Implement spec.md",
+          "agent_status": "blocked",
+          "agent_session": {
+            "source": "herdr:claude",
+            "agent": "claude",
+            "kind": "id",
+            "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+          },
+          "workspace_id": "w3",
+          "tab_id": "w3:t1",
+          "pane_id": "w3:p1",
+          "focused": false,
+          "state_change_seq": 91,
+          "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "revision": 4
+        }
+      ]
+    }
+  },
+  "worktree_list": {
+    "id": "req_5",
+    "result": {
+      "type": "worktree_list",
+      "source": {
+        "repo_key": "/home/vibrantclouds/Development/SizeComparisonSite/.git",
+        "repo_name": "SizeComparisonSite",
+        "repo_root": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "source_checkout_path": "/home/vibrantclouds/Development/SizeComparisonSite",
+        "source_workspace_id": "w2"
+      },
+      "worktrees": [
+        {
+          "path": "/home/vibrantclouds/Development/SizeComparisonSite",
+          "branch": "main",
+          "is_bare": false,
+          "is_detached": false,
+          "is_prunable": false,
+          "is_linked_worktree": false,
+          "open_workspace_id": "w2",
+          "label": "SizeComparisonSite"
+        }
+      ]
+    }
+  },
+  "plugin_list": {
+    "id": "req_6",
+    "result": {
+      "type": "plugin_list",
+      "plugins": []
+    }
+  },
+  "plugin_action_list": {
+    "id": "req_9",
+    "result": {
+      "type": "plugin_action_list",
+      "actions": []
+    }
+  },
+  "plugin_log_list": {
+    "id": "req_8",
+    "result": {
+      "type": "plugin_log_list",
+      "logs": []
+    }
+  },
+  "integration_list": {
+    "id": "req_7",
+    "result": {
+      "type": "integration_list",
+      "integrations": [
+        {
+          "target": "pi",
+          "label": "pi",
+          "command": "pi",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "omp",
+          "label": "omp",
+          "command": "omp",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "claude",
+          "label": "claude",
+          "command": "claude",
+          "available": true,
+          "state": "current"
+        },
+        {
+          "target": "codex",
+          "label": "codex",
+          "command": "codex",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "copilot",
+          "label": "copilot",
+          "command": "copilot",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "devin",
+          "label": "devin",
+          "command": "devin",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "droid",
+          "label": "droid",
+          "command": "droid",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "kimi",
+          "label": "kimi",
+          "command": "kimi",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "opencode",
+          "label": "opencode",
+          "command": "opencode",
+          "available": true,
+          "state": "current"
+        },
+        {
+          "target": "kilo",
+          "label": "kilo",
+          "command": "kilo",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "hermes",
+          "label": "hermes",
+          "command": "hermes",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "qodercli",
+          "label": "qodercli",
+          "command": "qodercli",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "qwen",
+          "label": "qwen",
+          "command": "qwen",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "cursor",
+          "label": "cursor",
+          "command": "cursor-agent",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "mastracode",
+          "label": "mastracode",
+          "command": "mastracode",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "antigravity_cli",
+          "label": "antigravity-cli",
+          "command": "agy",
+          "available": false,
+          "state": "not_installed"
+        },
+        {
+          "target": "grok",
+          "label": "grok",
+          "command": "grok",
+          "available": false,
+          "state": "not_installed"
+        }
+      ]
+    }
+  },
+  "server_agent_manifests": {
+    "id": "req_8",
+    "result": {
+      "type": "agent_manifest_status",
+      "last_check_unix": 1789524830,
+      "last_result": "checked",
+      "manifests": [
+        {
+          "agent": "pi",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/pi.toml",
+          "source_kind": "remote",
+          "active_version": "2026.09.14.1",
+          "cached_remote_version": "2026.09.14.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "claude",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/claude.toml",
+          "source_kind": "remote",
+          "active_version": "2026.09.11.1",
+          "cached_remote_version": "2026.09.11.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "codex",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/codex.toml",
+          "source_kind": "remote",
+          "active_version": "2026.09.14.1",
+          "cached_remote_version": "2026.09.14.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "gemini",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/gemini.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.10.1",
+          "cached_remote_version": "2026.06.10.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "cursor",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/cursor.toml",
+          "source_kind": "remote",
+          "active_version": "2026.08.03.1",
+          "cached_remote_version": "2026.08.03.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "devin",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/devin.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.15.1",
+          "cached_remote_version": "2026.06.15.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "agy",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/agy.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.24.1",
+          "cached_remote_version": "2026.06.24.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "cline",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/cline.toml",
+          "source_kind": "remote",
+          "active_version": "2026.09.11.1",
+          "cached_remote_version": "2026.09.11.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "opencode",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/opencode.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.10.1",
+          "cached_remote_version": "2026.06.10.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "copilot",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/copilot.toml",
+          "source_kind": "remote",
+          "active_version": "2026.08.29.1",
+          "cached_remote_version": "2026.08.29.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "kimi",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/kimi.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.10.1",
+          "cached_remote_version": "2026.06.10.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "kiro",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/kiro.toml",
+          "source_kind": "remote",
+          "active_version": "2026.08.01.1",
+          "cached_remote_version": "2026.08.01.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "droid",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/droid.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.10.1",
+          "cached_remote_version": "2026.06.10.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "amp",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/amp.toml",
+          "source_kind": "remote",
+          "active_version": "2026.07.09.1",
+          "cached_remote_version": "2026.07.09.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "grok",
+          "source": "bundled",
+          "source_kind": "bundled",
+          "active_version": "2026.07.16.2",
+          "cached_remote_version": "2026.07.16.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830,
+          "warning": "ignored remote manifest /home/vibrantclouds/.local/state/herdr/agent-detection/remote/grok.toml because cached version 2026.07.16.1 is older than bundled 2026.07.16.2"
+        },
+        {
+          "agent": "hermes",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/hermes.toml",
+          "source_kind": "remote",
+          "active_version": "2026.07.24.1",
+          "cached_remote_version": "2026.07.24.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "kilo",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/kilo.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.10.1",
+          "cached_remote_version": "2026.06.10.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "qodercli",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/qodercli.toml",
+          "source_kind": "remote",
+          "active_version": "2026.06.10.1",
+          "cached_remote_version": "2026.06.10.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "qwen",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/qwen.toml",
+          "source_kind": "remote",
+          "active_version": "2026.08.14.1",
+          "cached_remote_version": "2026.08.14.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "maki",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/maki.toml",
+          "source_kind": "remote",
+          "active_version": "2026.07.09.2",
+          "cached_remote_version": "2026.07.09.2",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        },
+        {
+          "agent": "muse",
+          "source": "remote:/home/vibrantclouds/.local/state/herdr/agent-detection/remote/muse.toml",
+          "source_kind": "remote",
+          "active_version": "2026.08.26.1",
+          "cached_remote_version": "2026.08.26.1",
+          "local_override_shadowing_remote": false,
+          "remote_update_result": "current",
+          "remote_last_checked_unix": 1789524830
+        }
+      ]
+    }
+  }
+}

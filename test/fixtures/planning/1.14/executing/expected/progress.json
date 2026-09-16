@@ -1,0 +1,24 @@
+{
+  "milestone_version": "v1.0",
+  "milestone_name": null,
+  "phases": [
+    {
+      "number": "01",
+      "name": "foundation registry state machine",
+      "plans": 6,
+      "summaries": 6,
+      "status": "Complete"
+    },
+    {
+      "number": "02",
+      "name": "execution worktree runner billing safety",
+      "plans": 18,
+      "summaries": 17,
+      "status": "In Progress"
+    }
+  ],
+  "total_plans": 24,
+  "total_summaries": 23,
+  "percent": null,
+  "phase_scope": "unscoped"
+}

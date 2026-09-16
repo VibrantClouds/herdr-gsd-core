@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-frontend-architecture.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Frontend Architecture",
+  "summary": "Frontend architecture specification for Angular 22 SPA with monorepo layout, signals-based state, component hierarchy, routes, and Angular conventions.",
+  "scope": ["Angular", "frontend", "SPA", "monorepo", "signals", "state management", "routes", "services", "IndexedDB", "autosave"],
+  "cross_refs": ["SPEC-share-api.md", "SPEC-subdocument-plugin-contract.md", "SPEC-design-system.md", "SPEC-deployment.md", "SPEC-image-pipeline.md", "SPEC-security-and-abuse.md", "SPEC-serialization-policy.md"],
+  "locked": false,
+  "precedence": null
+}

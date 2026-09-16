@@ -1,0 +1,389 @@
+{
+  "note": "Server closes the connection after each non-subscription response; one request per connection.",
+  "ping": {
+    "request": {
+      "id": "req_0",
+      "method": "ping",
+      "params": {}
+    },
+    "response": {
+      "id": "req_0",
+      "result": {
+        "type": "pong",
+        "version": "0.9.0",
+        "protocol": 22,
+        "capabilities": {
+          "live_handoff": true,
+          "detached_server_daemon": true,
+          "endpoint_protocol_generation": 1,
+          "surface_interest": true,
+          "health_check": true
+        }
+      }
+    }
+  },
+  "unknown_method": {
+    "request": {
+      "id": "req_1",
+      "method": "no.such_method",
+      "params": {}
+    },
+    "response": {
+      "id": "",
+      "error": {
+        "code": "invalid_request",
+        "message": "invalid request: unknown variant `no.such_method`, expected one of `ping`, `server.stop`, `server.live_handoff`, `server.reload_config`, `server.agent_manifests`, `server.reload_agent_manifests`, `notification.show`, `product_announcement.dismiss`, `release_notes.dismiss`, `command.invoke`, `client.window_title.set`, `client.window_title.clear`, `client_shell.surface.set`, `session.snapshot`, `workspace.create`, `workspace.list`, `workspace.get`, `workspace.focus`, `workspace.rename`, `workspace.move`, `workspace.move_block`, `workspace.report_metadata`, `workspace.close`, `worktree.list`, `worktree.create`, `worktree.open`, `worktree.remove`, `tab.create`, `tab.list`, `tab.get`, `tab.focus`, `tab.rename`, `tab.move`, `tab.close`, `agent.list`, `agent.get`, `agent.read`, `agent.explain`, `agent.send_keys`, `agent.rename`, `agent.view.set`, `agent.view.clear`, `agent.focus`, `agent.start`, `agent.prompt`, `agent.wait`, `pane.split`, `pane.swap`, `pane.move`, `pane.zoom`, `pane.layout`, `pane.process_info`, `layout.export`, `layout.apply`, `layout.set_split_ratio`, `pane.neighbor`, `pane.edges`, `pane.focus_direction`, `pane.resize`, `pane.scroll`, `pane.edit_scrollback`, `pane.selection.read`, `pane.copy_motion`, `pane.copy_search`, `pane.list`, `pane.current`, `pane.get`, `pane.focus`, `pane.input.set`, `pane.link.activate`, `pane.rename`, `pane.send_text`, `pane.send_keys`, `pane.send_input`, `pane.read`, `pane.graphics.set`, `pane.graphics.clear`, `pane.graphics.info`, `pane.graphics.stream`, `pane.report_agent`, `pane.report_agent_session`, `pane.report_metadata`, `pane.clear_agent_authority`, `pane.release_agent`, `pane.close`, `popup.close`, `events.subscribe`, `events.wait`, `pane.wait_for_output`, `integration.list`, `integration.install`, `integration.uninstall`, `plugin.link`, `plugin.list`, `plugin.unlink`, `plugin.enable`, `plugin.disable`, `plugin.action.list`, `plugin.action.invoke`, `plugin.log.list`, `plugin.pane.open`, `plugin.pane.focus`, `plugin.pane.close` at line 1 column 52"
+      }
+    }
+  },
+  "missing_required_param": {
+    "request": {
+      "id": "req_3",
+      "method": "pane.report_metadata",
+      "params": {}
+    },
+    "response": {
+      "id": "",
+      "error": {
+        "code": "invalid_request",
+        "message": "invalid request: missing field `pane_id` at line 1 column 58"
+      }
+    }
+  },
+  "method_catalogue": [
+    "ping",
+    "server.stop",
+    "server.live_handoff",
+    "server.reload_config",
+    "server.agent_manifests",
+    "server.reload_agent_manifests",
+    "notification.show",
+    "product_announcement.dismiss",
+    "release_notes.dismiss",
+    "command.invoke",
+    "client.window_title.set",
+    "client.window_title.clear",
+    "client_shell.surface.set",
+    "session.snapshot",
+    "workspace.create",
+    "workspace.list",
+    "workspace.get",
+    "workspace.focus",
+    "workspace.rename",
+    "workspace.move",
+    "workspace.move_block",
+    "workspace.report_metadata",
+    "workspace.close",
+    "worktree.list",
+    "worktree.create",
+    "worktree.open",
+    "worktree.remove",
+    "tab.create",
+    "tab.list",
+    "tab.get",
+    "tab.focus",
+    "tab.rename",
+    "tab.move",
+    "tab.close",
+    "agent.list",
+    "agent.get",
+    "agent.read",
+    "agent.explain",
+    "agent.send_keys",
+    "agent.rename",
+    "agent.view.set",
+    "agent.view.clear",
+    "agent.focus",
+    "agent.start",
+    "agent.prompt",
+    "agent.wait",
+    "pane.split",
+    "pane.swap",
+    "pane.move",
+    "pane.zoom",
+    "pane.layout",
+    "pane.process_info",
+    "layout.export",
+    "layout.apply",
+    "layout.set_split_ratio",
+    "pane.neighbor",
+    "pane.edges",
+    "pane.focus_direction",
+    "pane.resize",
+    "pane.scroll",
+    "pane.edit_scrollback",
+    "pane.selection.read",
+    "pane.copy_motion",
+    "pane.copy_search",
+    "pane.list",
+    "pane.current",
+    "pane.get",
+    "pane.focus",
+    "pane.input.set",
+    "pane.link.activate",
+    "pane.rename",
+    "pane.send_text",
+    "pane.send_keys",
+    "pane.send_input",
+    "pane.read",
+    "pane.graphics.set",
+    "pane.graphics.clear",
+    "pane.graphics.info",
+    "pane.graphics.stream",
+    "pane.report_agent",
+    "pane.report_agent_session",
+    "pane.report_metadata",
+    "pane.clear_agent_authority",
+    "pane.release_agent",
+    "pane.close",
+    "popup.close",
+    "events.subscribe",
+    "events.wait",
+    "pane.wait_for_output",
+    "integration.list",
+    "integration.install",
+    "integration.uninstall",
+    "plugin.link",
+    "plugin.list",
+    "plugin.unlink",
+    "plugin.enable",
+    "plugin.disable",
+    "plugin.action.list",
+    "plugin.action.invoke",
+    "plugin.log.list",
+    "plugin.pane.open",
+    "plugin.pane.focus",
+    "plugin.pane.close"
+  ],
+  "error_probes": [
+    {
+      "request": {
+        "id": "req_0",
+        "method": "notification.show",
+        "params": {
+          "title": "GSD M0-H probe",
+          "body": "herdr-gsd-core verification spike",
+          "sound": "none"
+        }
+      },
+      "response": {
+        "id": "req_0",
+        "result": {
+          "type": "notification_show",
+          "shown": true,
+          "reason": "shown"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_1",
+        "method": "agent.view.set",
+        "params": {
+          "source": "plugin:herdr-gsd-core",
+          "label": "gsd",
+          "filter": {
+            "op": "exists",
+            "field": {
+              "token": "gsd_phase"
+            },
+            "BOGUS": 1
+          }
+        }
+      },
+      "response": {
+        "id": "req_1",
+        "error": {
+          "code": "plugin_not_found",
+          "message": "plugin not found"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_2",
+        "method": "agent.view.set",
+        "params": {
+          "source": "plugin:herdr-gsd-core",
+          "label": "gsd",
+          "filter": {
+            "op": "eq",
+            "field": "not_a_field",
+            "value": "x"
+          }
+        }
+      },
+      "response": {
+        "id": "",
+        "error": {
+          "code": "invalid_request",
+          "message": "invalid request: data did not match any variant of untagged enum AgentViewField at line 1 column 153"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_3",
+        "method": "agent.view.set",
+        "params": {
+          "source": "plugin:herdr-gsd-core",
+          "label": "gsd",
+          "filter": {
+            "op": "exists",
+            "field": {
+              "token": "gsd_phase"
+            }
+          }
+        }
+      },
+      "response": {
+        "id": "req_3",
+        "error": {
+          "code": "plugin_not_found",
+          "message": "plugin not found"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_4",
+        "method": "agent.view.clear",
+        "params": {
+          "source": "plugin:herdr-gsd-core"
+        }
+      },
+      "response": {
+        "id": "req_4",
+        "result": {
+          "type": "agent_view",
+          "active": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_5",
+        "method": "pane.get",
+        "params": {
+          "pane_id": "w9:p9"
+        }
+      },
+      "response": {
+        "id": "req_5",
+        "error": {
+          "code": "pane_not_found",
+          "message": "pane w9:p9 not found"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_6",
+        "method": "pane.process_info",
+        "params": {
+          "pane_id": "w9:p9"
+        }
+      },
+      "response": {
+        "id": "req_6",
+        "error": {
+          "code": "pane_not_found",
+          "message": "pane not found"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_7",
+        "method": "tab.get",
+        "params": {
+          "tab_id": "nope"
+        }
+      },
+      "response": {
+        "id": "req_7",
+        "error": {
+          "code": "tab_not_found",
+          "message": "tab nope not found"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_8",
+        "method": "notification.show",
+        "params": {
+          "title": "   "
+        }
+      },
+      "response": {
+        "id": "req_8",
+        "error": {
+          "code": "invalid_params",
+          "message": "notification title is empty"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_9",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w9",
+          "source": "plugin:herdr-gsd-core",
+          "tokens": {
+            "a": "b"
+          }
+        }
+      },
+      "response": {
+        "id": "req_9",
+        "error": {
+          "code": "workspace_not_found",
+          "message": "workspace w9 not found"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_10",
+        "method": "workspace.report_metadata",
+        "params": {
+          "workspace_id": "w2",
+          "source": "bad source!",
+          "tokens": {
+            "a": "b"
+          }
+        }
+      },
+      "response": {
+        "id": "req_10",
+        "error": {
+          "code": "invalid_metadata_source",
+          "message": "metadata source may contain only ASCII letters, digits, colon, dot, underscore, and hyphen"
+        }
+      }
+    },
+    {
+      "request": {
+        "id": "req_11",
+        "method": "pane.report_metadata",
+        "params": {
+          "pane_id": "w2:p1",
+          "source": "plugin:herdr-gsd-core",
+          "tokens": {
+            "a": "b"
+          },
+          "ttl_ms": 99999999
+        }
+      },
+      "response": {
+        "id": "req_11",
+        "error": {
+          "code": "invalid_metadata_ttl",
+          "message": "metadata ttl_ms must be 86400000 or less"
+        }
+      }
+    }
+  ]
+}

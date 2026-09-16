@@ -1,0 +1,10 @@
+{
+  "directories": [
+    "01-foundation-library",
+    "02-intimacy-plugin-unified-page",
+    "03-snapshot-share-end-to-end",
+    "04-images"
+  ],
+  "count": 4,
+  "phase_scope": "unscoped"
+}

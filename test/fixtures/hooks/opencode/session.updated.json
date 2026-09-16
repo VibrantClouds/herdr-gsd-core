@@ -1,0 +1,9 @@
+{
+  "type": "session.updated",
+  "properties": {
+    "info": {
+      "id": "ses_0001",
+      "title": "auth fix"
+    }
+  }
+}

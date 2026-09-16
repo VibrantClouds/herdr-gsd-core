@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-intimacy-dossier.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Intimacy Dossier (type: 'intimacy')",
+  "summary": "Technical specification for the intimacy dossier page type, including data schema, UI layout, and rating system definitions.",
+  "scope": ["intimacy", "dossier", "data schema", "rating system", "BDSM", "anatomy", "themes", "scales", "TypeScript types"],
+  "cross_refs": ["0001-code-defined-subdocument-templates.md", "0002-character-core-fields.md"],
+  "locked": false,
+  "precedence": null
+}

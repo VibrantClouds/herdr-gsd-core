@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-deployment.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Deployment and Environments",
+  "summary": "Specifies deployment of three deployables: Angular SPA on Cloudflare Workers, Node API on Railway, images on S3/CloudFront, with monorepo structure and AWS setup.",
+  "scope": ["Cloudflare Workers", "Angular 22", "Railway", "S3", "CloudFront", "Node.js", "pnpm", "DNS", "AWS", "deployment", "Wrangler", "Hono"],
+  "cross_refs": ["0007-backend-node-typescript-railway-s3.md", "0008-monorepo-shared-schema-package.md", "0009-hosting-cloudflare-static-api-subdomain.md", "SPEC-storage-s3.md", "SPEC-security-and-abuse.md", "SPEC-serialization-policy.md"],
+  "locked": false,
+  "precedence": null
+}

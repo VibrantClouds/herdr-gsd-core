@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0007-backend-node-typescript-railway-s3.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0007: The backend is a small Node + TypeScript service on Railway writing to AWS S3",
+  "summary": "Node.js TypeScript service on Railway with Hono framework writing to AWS S3, validating payloads with shared schemas.",
+  "scope": ["Node.js", "TypeScript", "Railway", "AWS S3", "Hono", "payload validation", "rate limiting"],
+  "cross_refs": ["ADR-0008", "SPEC-share-api.md", "SPEC-deployment.md", "ADR-0012"],
+  "locked": true,
+  "precedence": null
+}

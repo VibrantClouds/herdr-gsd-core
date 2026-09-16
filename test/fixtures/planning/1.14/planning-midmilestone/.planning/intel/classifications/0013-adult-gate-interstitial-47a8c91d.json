@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0013-adult-gate-interstitial.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0013: Adult content is gated by a client-side interstitial shown only when an included section is adult, with the flag recomputed server-side",
+  "summary": "Server-side recomputes adult flag for shares; client shows 18+ interstitial on first view, cached in localStorage, not an age gate.",
+  "scope": ["adult content gating", "interstitial", "share pages", "Intimacy Dossier", "SubDocumentSchema", "localStorage acknowledgement"],
+  "cross_refs": ["ADR-0005", "SPEC-frontend-architecture.md", "SPEC-security-and-abuse.md"],
+  "locked": true,
+  "precedence": null
+}

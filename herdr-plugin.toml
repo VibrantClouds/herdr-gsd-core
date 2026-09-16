@@ -1,0 +1,87 @@
+id = "herdr-gsd-core"
+name = "GSD-Core"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Observe GSD-Core (.planning) projects: sidebar tokens, notifications, dashboard, supervised runs"
+platforms = ["linux", "macos"]
+
+[[build]]
+command = ["npm", "ci"]
+
+[[build]]
+command = ["npm", "run", "build"]
+
+[[startup]]
+command = ["node", "packages/cli/dist/main.js", "daemon", "ensure"]
+
+[[actions]]
+id = "rescan"
+title = "GSD: rescan projects"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "project", "rescan"]
+
+[[actions]]
+id = "status"
+title = "GSD: status"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "status"]
+
+[[actions]]
+id = "notify-test"
+title = "GSD: test notification"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "notify", "test"]
+
+[[actions]]
+id = "daemon-restart"
+title = "GSD: restart daemon"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "daemon", "restart"]
+
+[[actions]]
+id = "orchestrate-phase"
+title = "GSD: run next step in a new pane"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "orchestrate", "phase"]
+
+[[actions]]
+id = "orchestrate-phase-isolated"
+title = "GSD: run current phase in a worktree"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "orchestrate", "isolated"]
+
+[[actions]]
+id = "orchestrate-autonomous"
+title = "GSD: start supervised /gsd-autonomous"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "orchestrate", "autonomous"]
+
+[[actions]]
+id = "orchestrate-stop"
+title = "GSD: stop this workspace's run"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "orchestrate", "stop"]
+
+[[actions]]
+id = "orchestrate-status"
+title = "GSD: orchestration status"
+contexts = ["workspace"]
+command = ["node", "packages/cli/dist/main.js", "orchestrate", "status"]
+
+[[events]]
+on = "workspace.created"
+command = ["node", "packages/cli/dist/main.js", "event"]
+
+[[events]]
+on = "workspace.closed"
+command = ["node", "packages/cli/dist/main.js", "event"]
+
+[[events]]
+on = "worktree.created"
+command = ["node", "packages/cli/dist/main.js", "event"]
+
+[[panes]]
+id = "dashboard"
+title = "GSD dashboard"
+placement = "split"
+command = ["node", "packages/dashboard/dist/main.js"]

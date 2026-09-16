@@ -1,0 +1,50 @@
+{
+  "situation": "needs-first-phase",
+  "recommended": "discuss-phase",
+  "summary": "Project initialized — plan your first phase",
+  "signals": {
+    "current_phase": null,
+    "total_phases": null,
+    "status": "",
+    "progress": null,
+    "has_planning": true,
+    "has_roadmap": false,
+    "git_dirty": true,
+    "git_unpushed": false,
+    "paused": false,
+    "blockers": [],
+    "has_git": true,
+    "verify_failed": false,
+    "stale_activity": false,
+    "roadmap_total_phases": null,
+    "roadmap_completed_phases": null,
+    "state_commits_behind": null,
+    "state_commit_stale": null
+  },
+  "actions": [
+    {
+      "id": "discuss-phase",
+      "label": "Discuss the first phase",
+      "command": "/gsd:discuss-phase",
+      "recommended": true
+    },
+    {
+      "id": "plan-phase",
+      "label": "Plan phase 1",
+      "command": "/gsd:plan-phase",
+      "recommended": false
+    },
+    {
+      "id": "quick",
+      "label": "Quick task",
+      "command": "/gsd:quick",
+      "recommended": false
+    },
+    {
+      "id": "progress",
+      "label": "Show progress",
+      "command": "/gsd:progress",
+      "recommended": false
+    }
+  ]
+}

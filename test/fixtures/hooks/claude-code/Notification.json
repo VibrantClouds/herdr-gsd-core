@@ -1,0 +1,8 @@
+{
+  "session_id": "a1b2c3d4-0001-4a11-8f00-000000000001",
+  "transcript_path": "/home/user/.claude/projects/-home-user-myproj/a1b2c3d4-0001-4a11-8f00-000000000001.jsonl",
+  "cwd": "/home/user/myproj",
+  "hook_event_name": "Notification",
+  "title": "Permission needed",
+  "notification_type": "permission_prompt"
+}

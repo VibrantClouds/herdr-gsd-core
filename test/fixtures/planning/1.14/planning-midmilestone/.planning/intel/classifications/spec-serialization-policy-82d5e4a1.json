@@ -1,0 +1,24 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/specs/SPEC-serialization-policy.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "SPEC — Serialization and Migration Policy",
+  "summary": "Specification for serialization versioning, migration procedures, and fixture validation for envelope and plugin schemas.",
+  "scope": [
+    "serialization",
+    "versioning",
+    "migrations",
+    "fixtures",
+    "schema validation",
+    "backward compatibility",
+    "envelope",
+    "plugins"
+  ],
+  "cross_refs": [
+    "0011-per-plugin-schema-versioning.md",
+    "0004-share-links-snapshot-and-living.md"
+  ],
+  "locked": false,
+  "precedence": null
+}

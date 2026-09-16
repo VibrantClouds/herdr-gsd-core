@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0012-content-addressed-images-no-gc.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0012: Images are client-compressed, content-addressed by SHA-256, uploaded only if missing, and never garbage-collected in v1",
+  "summary": "Images are client-compressed, content-addressed by SHA-256, uploaded if missing, never garbage-collected in v1.",
+  "scope": ["image storage", "client-side compression", "content addressing", "SHA-256", "S3", "IndexedDB", "WebP", "JPEG"],
+  "cross_refs": ["SPEC-image-pipeline.md", "SPEC-storage-s3.md", "apps/api/scripts/sweep-images.ts"],
+  "locked": true,
+  "precedence": null
+}

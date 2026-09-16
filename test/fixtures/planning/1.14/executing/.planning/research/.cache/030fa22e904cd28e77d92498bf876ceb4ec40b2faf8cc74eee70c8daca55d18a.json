@@ -1,0 +1,1 @@
+{"content":"Use discriminated-union transition tables when state graph is flat/small and the type-checker enforcing legal transitions is the goal. Reach for XState only when there is nesting, parallel regions, or actor/process orchestration needs.","source":"web","provider":"websearch","confidence":"LOW","fetched_at":"2026-07-23T01:11:56.110Z","ttl":86400000,"kind":"web"}

@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0009-hosting-cloudflare-static-api-subdomain.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0009: Frontend on Cloudflare Workers static assets; API and images on separate subdomains",
+  "summary": "Chosen: frontend via Cloudflare Workers static assets, API on Railway subdomain, images on CloudFront subdomain.",
+  "scope": ["Cloudflare Workers", "static assets", "Railway API", "CloudFront images", "subdomains", "CORS", "SPA"],
+  "cross_refs": ["SPEC-deployment.md"],
+  "locked": true,
+  "precedence": null
+}

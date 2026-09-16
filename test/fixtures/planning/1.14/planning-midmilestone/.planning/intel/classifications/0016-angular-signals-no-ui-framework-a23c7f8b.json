@@ -1,0 +1,12 @@
+{
+  "source_path": "/home/cweiser/Development/Personal/CharacterDossier/docs/adr/0016-angular-signals-no-ui-framework.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "ADR-0016: Angular 22 standalone components with signals and zoneless change detection, SCSS and CSS custom properties; no UI framework or store library",
+  "summary": "Adopt Angular 22 with signals-first state management, zoneless change detection, and SCSS styling; no Material, Tailwind, NgRx, or SignalStore.",
+  "scope": ["Angular 22", "signals", "standalone components", "zoneless change detection", "SCSS", "CSS custom properties", "state management", "component architecture"],
+  "cross_refs": ["ADR-0015", "SPEC-frontend-architecture.md"],
+  "locked": true,
+  "precedence": null
+}

@@ -1,0 +1,1 @@
+{"id":"spike","error":{"code":"dirty_worktree_requires_force","message":"fatal: '/home/vibrantclouds/.herdr/worktrees/repo/gsd-dirty-test' contains modified or untracked files, use --force to delete it"}}

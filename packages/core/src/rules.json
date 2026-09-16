@@ -1,0 +1,77 @@
+{
+  "$comment": "gsd_next rule table (spec §4.3). Evaluated top to bottom; first match wins. Conditions are named predicates implemented in next.ts. `{N}` = current phase number, `{N+1}` = next phase number. Rules prefixed `step_` trust the step STATE.md declares over plan/summary file counts (GSD's own smart-entry does the same), so a phase whose plans are still being written stays on plan-phase.",
+  "rules": [
+    {
+      "when": "paused",
+      "next": "resume-work"
+    },
+    {
+      "when": "no_phases",
+      "next": "discuss-phase"
+    },
+    {
+      "when": "all_phases_complete",
+      "next": "ship {N}"
+    },
+    {
+      "when": "phase_blocked",
+      "next": "execute-phase {N}"
+    },
+    {
+      "when": "uat_fail",
+      "next": "execute-phase {N}"
+    },
+    {
+      "when": "step_plan_phase_open",
+      "next": "plan-phase {N}"
+    },
+    {
+      "when": "step_verify_phase_open",
+      "next": "verify-work {N}"
+    },
+    {
+      "when": "step_execute_phase_open",
+      "next": "execute-phase {N}"
+    },
+    {
+      "when": "phase_not_started",
+      "next": "plan-phase {N}"
+    },
+    {
+      "when": "phase_discussed",
+      "next": "plan-phase {N}"
+    },
+    {
+      "when": "phase_planned_no_summaries",
+      "next": "execute-phase {N}"
+    },
+    {
+      "when": "phase_partially_executed",
+      "next": "execute-phase {N}"
+    },
+    {
+      "when": "uat_pass_has_next_phase",
+      "next": "plan-phase {N+1}"
+    },
+    {
+      "when": "uat_pass_last_phase",
+      "next": "ship {N}"
+    },
+    {
+      "when": "summaries_complete_uat_absent",
+      "next": "verify-work {N}"
+    },
+    {
+      "when": "phase_complete_has_next",
+      "next": "plan-phase {N+1}"
+    },
+    {
+      "when": "phase_complete_last",
+      "next": "ship {N}"
+    },
+    {
+      "when": "always",
+      "next": "progress"
+    }
+  ]
+}

@@ -1,0 +1,260 @@
+[
+  {
+    "request": {
+      "id": "req_0",
+      "method": "workspace.get",
+      "params": {
+        "workspace_id": "w3"
+      }
+    },
+    "response": {
+      "id": "req_0",
+      "result": {
+        "type": "workspace_info",
+        "workspace": {
+          "workspace_id": "w3",
+          "number": 3,
+          "label": "gsd-core-herdr",
+          "focused": true,
+          "pane_count": 1,
+          "tab_count": 1,
+          "active_tab_id": "w3:t1",
+          "agent_status": "blocked"
+        }
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_1",
+      "method": "pane.get",
+      "params": {
+        "pane_id": "w3:p1"
+      }
+    },
+    "response": {
+      "id": "req_1",
+      "result": {
+        "type": "pane_info",
+        "pane": {
+          "pane_id": "w3:p1",
+          "terminal_id": "term_65b901fb2382d3",
+          "workspace_id": "w3",
+          "tab_id": "w3:t1",
+          "focused": true,
+          "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "agent": "claude",
+          "terminal_title": "✳ Implement spec.md",
+          "terminal_title_stripped": "Implement spec.md",
+          "agent_status": "blocked",
+          "agent_session": {
+            "source": "herdr:claude",
+            "agent": "claude",
+            "kind": "id",
+            "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+          },
+          "scroll": {
+            "offset_from_bottom": 0,
+            "max_offset_from_bottom": 0,
+            "viewport_rows": 67
+          },
+          "revision": 4
+        }
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_2",
+      "method": "agent.get",
+      "params": {
+        "target": "w3:p1"
+      }
+    },
+    "response": {
+      "id": "req_2",
+      "result": {
+        "type": "agent_info",
+        "agent": {
+          "terminal_id": "term_65b901fb2382d3",
+          "agent": "claude",
+          "terminal_title": "✳ Implement spec.md",
+          "terminal_title_stripped": "Implement spec.md",
+          "agent_status": "blocked",
+          "agent_session": {
+            "source": "herdr:claude",
+            "agent": "claude",
+            "kind": "id",
+            "value": "31aa6407-a3b1-4da2-b8f8-ed503371c45a"
+          },
+          "workspace_id": "w3",
+          "tab_id": "w3:t1",
+          "pane_id": "w3:p1",
+          "focused": true,
+          "state_change_seq": 91,
+          "cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "foreground_cwd": "/home/vibrantclouds/Development/gsd-core-herdr",
+          "revision": 4
+        }
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_3",
+      "method": "pane.process_info",
+      "params": {
+        "pane_id": "w3:p1"
+      }
+    },
+    "response": {
+      "id": "req_3",
+      "result": {
+        "type": "pane_process_info",
+        "process_info": {
+          "pane_id": "w3:p1",
+          "shell_pid": 121643,
+          "foreground_process_group_id": 136977,
+          "foreground_processes": [
+            {
+              "pid": 136977,
+              "name": "claude",
+              "argv": [
+                "claude"
+              ],
+              "cmdline": "claude",
+              "cwd": "/home/vibrantclouds/Development/gsd-core-herdr"
+            },
+            {
+              "pid": 137049,
+              "name": "npm exec @model",
+              "argv": [
+                "npm exec @modelcontextprotocol/server-postgres postgresql://REDACTEDst:5432/congress_system"
+              ],
+              "cmdline": "npm exec @modelcontextprotocol/server-postgres postgresql://REDACTEDst:5432/congress_system",
+              "cwd": "/home/vibrantclouds/Development/gsd-core-herdr"
+            },
+            {
+              "pid": 137051,
+              "name": "npm exec mcp-re",
+              "argv": [
+                "npm exec mcp-remote https://mcp.tavily.com/mcp/?tavilyApiKey=tvly-prod-REDACTED"
+              ],
+              "cmdline": "npm exec mcp-remote https://mcp.tavily.com/mcp/?tavilyApiKey=tvly-prod-REDACTED",
+              "cwd": "/home/vibrantclouds/Development/gsd-core-herdr"
+            },
+            {
+              "pid": 137114,
+              "name": "MainThread",
+              "argv": [
+                "/home/vibrantclouds/.nvm/versions/node/v24.21.0/bin/node",
+                "/home/vibrantclouds/.npm/_npx/705d23756ff7dacc/node_modules/.bin/mcp-remote",
+                "https://mcp.tavily.com/mcp/?tavilyApiKey=tvly-prod-REDACTED"
+              ],
+              "cmdline": "/home/vibrantclouds/.nvm/versions/node/v24.21.0/bin/node /home/vibrantclouds/.npm/_npx/705d23756ff7dacc/node_modules/.bin/mcp-remote https://mcp.tavily.com/mcp/?tavilyApiKey=tvly-prod-REDACTED",
+              "cwd": "/home/vibrantclouds/Development/gsd-core-herdr"
+            },
+            {
+              "pid": 137122,
+              "name": "MainThread",
+              "argv": [
+                "/home/vibrantclouds/.nvm/versions/node/v24.21.0/bin/node",
+                "/home/vibrantclouds/.npm/_npx/cd1ce99963b5e8b1/node_modules/.bin/mcp-server-postgres",
+                "postgresql://REDACTEDss_system@localhost:5432/congress_system"
+              ],
+              "cmdline": "/home/vibrantclouds/.nvm/versions/node/v24.21.0/bin/node /home/vibrantclouds/.npm/_npx/cd1ce99963b5e8b1/node_modules/.bin/mcp-server-postgres postgresql://REDACTEDss_system@localhost:5432/congress_system",
+              "cwd": "/home/vibrantclouds/Development/gsd-core-herdr"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_4",
+      "method": "tab.get",
+      "params": {
+        "tab_id": "w3:t1"
+      }
+    },
+    "response": {
+      "id": "req_4",
+      "result": {
+        "type": "tab_info",
+        "tab": {
+          "tab_id": "w3:t1",
+          "workspace_id": "w3",
+          "number": 1,
+          "label": "1",
+          "focused": true,
+          "pane_count": 1,
+          "agent_status": "blocked"
+        }
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_5",
+      "method": "agent.get",
+      "params": {
+        "target": "claude"
+      }
+    },
+    "response": {
+      "id": "req_5",
+      "error": {
+        "code": "agent_not_found",
+        "message": "agent target claude not found"
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_6",
+      "method": "agent.get",
+      "params": {
+        "target": "w9:p9"
+      }
+    },
+    "response": {
+      "id": "req_6",
+      "error": {
+        "code": "agent_not_found",
+        "message": "agent target w9:p9 not found"
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_7",
+      "method": "workspace.get",
+      "params": {
+        "workspace_id": "nope"
+      }
+    },
+    "response": {
+      "id": "req_7",
+      "error": {
+        "code": "workspace_not_found",
+        "message": "workspace nope not found"
+      }
+    }
+  },
+  {
+    "request": {
+      "id": "req_8",
+      "method": "plugin.log.list",
+      "params": {}
+    },
+    "response": {
+      "id": "req_8",
+      "result": {
+        "type": "plugin_log_list",
+        "logs": []
+      }
+    }
+  }
+]

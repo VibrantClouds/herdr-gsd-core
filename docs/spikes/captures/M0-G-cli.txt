@@ -1,0 +1,328 @@
+# M0-G capture: gsd-tools CLI (GSD-Core 1.14.0)
+# Runner: /home/vibrantclouds/.local/bin/node <pkg>/gsd-core/bin/gsd-tools.cjs
+# All commands below are READ-ONLY. See the spike doc for the write list.
+
+===== gsd-tools (no args) =====
+Error: Usage: gsd-tools <command> [args] [--raw] [--pick <field>] [--cwd <path>] [--project-dir <path>] [--ws <name>] [--json-errors] [--exit-contract=<v>]
+Commands: agent, agent-skills, assumption-delta, audit-open, audit-uat, check, check-commit, commit, commit-docs-guard, commit-to-subrepo, pr-subrepo, config-ensure-section, config-get, config-new-project, config-path, config-set, migrate-config, normalize-test-command, context-predicates, current-timestamp, detect-custom-files, docs-init, drift-guard, effort, extract-messages, find-phase, from-gsd2, frontmatter, gap-analysis, generate-claude-md, generate-claude-profile, generate-dev-preferences, generate-slug, graphify, history-digest, init, intel, capability, classify-confidence, git, learnings, list-seeds, list-todos, loop, milestone, package-legitimacy, phase, phase-plan-index, phases, planning, profile-questionnaire, profile-sample, progress, project-instruction-file, prompt-budget, quick-batch, quick-tasks-append, quick-tasks-migrate, requirements, research-plan, research-store, resolve-granularity, resolve-model, restore-custom-files, roadmap, runtime-identity, scaffold, smart-entry, state, config-set-model-profile, dispatch-capacity, dispatch-isolation, dispatch-should-flatten, inspect-dispatch-isolation, record-dispatch-isolation, estimate-calibrate, estimate-calibration, estimate-check, resolve-agent, resolve-dispatch-type, resolve-execution, review-lane, skill-manifest, skills-root, stamp-codebase-map, state-snapshot, stats, summary-extract, teams-status, todo, uat, update-context, verification, websearch, windows, task, template, user-story, validate, verify, verify-path-exists, verify-summary, eval, workstream, worktree
+
+Global flags:
+  --raw              Emit raw output without post-processing
+  --pick <field>     Extract a single field from JSON output (dot/bracket notation)
+  --cwd <path>       Override working directory for project-root resolution
+  --project-dir <path>  Explicit project root; skips the ancestor walk-up entirely (must already contain .planning/)
+  --ws <name>        Override active workstream (or set GSD_WORKSTREAM)
+  --json-errors      Emit structured JSON error objects on stderr (or set GSD_JSON_ERRORS=1)
+  --exit-contract=<v>  Exit-code contract version: v1 (default) or v2 (or set GSD_EXIT_CONTRACT)
+
+For command-specific argument requirements, invoke the command without args (e.g. `gsd-tools phase add`) — the resulting error lists what is required.
+
+===== gsd-tools --version (DOES NOT EXIST) =====
+Error: Unknown flag: --version
+gsd-tools does not accept version flags. Run "gsd-tools" with no arguments for usage.
+
+===== gsd-tools runtime-identity =====
+{
+  "packageName": "@opengsd/gsd-core",
+  "version": "1.14.0"
+}
+
+#################### FIXTURE: executing
+----- gsd-tools state-snapshot
+{
+  "current_phase": "02",
+  "current_phase_name": "execution-worktree-runner-billing-safety",
+  "total_phases": null,
+  "current_plan": null,
+  "total_plans_in_phase": null,
+  "status": "executing",
+  "progress_percent": null,
+  "last_activity": "2026-07-26",
+  "last_activity_desc": "Phase 02 execution started",
+  "decisions": [],
+  "blockers": [],
+  "paused_at": null,
+  "session": {
+    "last_date": "2026-07-26T18:33:45.711Z",
+    "stopped_at": "Completed 02-14-PLAN.md",
+    "resume_file": "None"
+  }
+}----- gsd-tools phases list
+Error: Unknown command: phases list
+----- gsd-tools progress
+{
+  "milestone_version": "v1.0",
+  "milestone_name": null,
+  "phases": [
+    {
+      "number": "01",
+      "name": "foundation registry state machine",
+      "plans": 6,
+      "summaries": 6,
+      "status": "Complete"
+    },
+    {
+      "number": "02",
+      "name": "execution worktree runner billing safety",
+      "plans": 18,
+      "summaries": 17,
+      "status": "In Progress"
+    }
+  ],
+  "total_plans": 24,
+  "total_summaries": 23,
+  "percent": null,
+  "phase_scope": "unscoped"
+}----- gsd-tools smart-entry --json
+Error: Unknown command: smart-entry --json
+
+#################### FIXTURE: planning-midmilestone
+----- gsd-tools state-snapshot
+{
+  "current_phase": "4",
+  "current_phase_name": "Images",
+  "total_phases": null,
+  "current_plan": null,
+  "total_plans_in_phase": null,
+  "status": "planning",
+  "progress_percent": null,
+  "last_activity": "2026-09-15",
+  "last_activity_desc": "Phase 03 complete, transitioned to Phase 4",
+  "decisions": [],
+  "blockers": [],
+  "paused_at": null,
+  "session": {
+    "last_date": "2026-09-16T02:05:26.266Z",
+    "stopped_at": "Phase 4 context gathered",
+    "resume_file": ".planning/phases/04-images/04-CONTEXT.md"
+  }
+}----- gsd-tools phases list
+Error: Unknown command: phases list
+----- gsd-tools progress
+{
+  "milestone_version": "v1.0",
+  "milestone_name": null,
+  "phases": [
+    {
+      "number": "01",
+      "name": "foundation library",
+      "plans": 6,
+      "summaries": 6,
+      "status": "Complete"
+    },
+    {
+      "number": "02",
+      "name": "intimacy plugin unified page",
+      "plans": 7,
+      "summaries": 7,
+      "status": "Complete"
+    },
+    {
+      "number": "03",
+      "name": "snapshot share end to end",
+      "plans": 8,
+      "summaries": 8,
+      "status": "Complete"
+    },
+    {
+      "number": "04",
+      "name": "images",
+      "plans": 0,
+      "summaries": 0,
+      "status": "Pending"
+    }
+  ],
+  "total_plans": 21,
+  "total_summaries": 21,
+  "percent": null,
+  "phase_scope": "unscoped"
+}----- gsd-tools smart-entry --json
+Error: Unknown command: smart-entry --json
+
+#################### FIXTURE: milestone-rollover
+----- gsd-tools state-snapshot
+{
+  "current_phase": "7",
+  "current_phase_name": "Coordinate & Scale Correctness Foundations",
+  "total_phases": null,
+  "current_plan": null,
+  "total_plans_in_phase": null,
+  "status": "planning",
+  "progress_percent": null,
+  "last_activity": "2026-09-15",
+  "last_activity_desc": "v1.1 roadmap created (Phases 7-12, 31/31 requirements mapped)",
+  "decisions": [],
+  "blockers": [],
+  "paused_at": null,
+  "session": {
+    "last_date": "2026-09-16T02:29:12.036Z",
+    "stopped_at": "Phase 7 context gathered",
+    "resume_file": ".planning/phases/07-coordinate-scale-correctness-foundations/07-CONTEXT.md"
+  }
+}----- gsd-tools phases list
+Error: Unknown command: phases list
+----- gsd-tools progress
+{
+  "milestone_version": "v1.1",
+  "milestone_name": "Measurement Ruler",
+  "phases": [
+    {
+      "number": "07",
+      "name": "coordinate scale correctness foundations",
+      "plans": 0,
+      "summaries": 0,
+      "status": "Pending"
+    }
+  ],
+  "total_plans": 0,
+  "total_summaries": 0,
+  "percent": 0,
+  "phase_scope": "complete"
+}----- gsd-tools smart-entry --json
+Error: Unknown command: smart-entry --json
+
+#################### FIXTURE: empty
+----- gsd-tools state-snapshot
+{
+  "error": "STATE.md not found"
+}----- gsd-tools phases list
+Error: Unknown command: phases list
+----- gsd-tools progress
+{
+  "milestone_version": null,
+  "milestone_name": null,
+  "phases": [],
+  "total_plans": 0,
+  "total_summaries": 0,
+  "percent": null,
+  "phase_scope": "unreadable"
+}----- gsd-tools smart-entry --json
+Error: Unknown command: smart-entry --json
+
+===== gsd-tools phase-plan-index 2 (executing fixture, first plan only) =====
+{
+  "phase": "02",
+  "plans": [
+    {
+      "id": "02-01",
+      "wave": 1,
+      "depends_on": [],
+      "autonomous": true,
+      "objective": "Land the three Wave-0 items every later plan in this phase depends on: the missing `RATE_LIMITED`",
+      "files_modified": [
+        "src/core/state-machine/transitions.ts",
+        "src/core/state-machine/transitions.test.ts",
+        "src/runner/env.ts",
+        "src/runner/env.test.ts",
+        "src/spikes/spawn-claude.ts",
+        ".nvmrc"
+      ],
+      "files_deleted": [],
+      "agent_hint": null,
+      "task_count": 3,
+      "has_summary": true,
+      "halted": false,
+      "blocked_by": []
+    },
+    {
+      "id": "02-02",
+      "wave": 1,
+      "depends_on": [],
+      "autonomous": false,
+      "objective": "Clear the two gates that must close before any code in this phase is written: the supply-chain gate on",
+
+===== gsd-tools roadmap get-phase 2 --pick goal =====
+I can create a task against a registered project and Fleet reliably provisions an isolated worktree, spawns a billing-safe headless Claude Code session with explicit caps, and tracks it to completion
+===== gsd-tools state (config+state dump) — keys only =====
+{
+  "config": {
+    "model_profile": "adaptive",
+    "commit_docs": true,
+    "search_gitignored": false,
+    "branching_strategy": "none",
+    "phase_branch_template": "gsd/phase-{phase}-{slug}",
+    "milestone_branch_template": "gsd/{milestone}-{slug}",
+    "quick_branch_template": null,
+    "research": true,
+    "plan_checker": true,
+    "verifier": true,
+    "nyquist_validation": true,
+    "post_planning_gaps": true,
+    "parallelization": true,
+    "brave_search": false,
+    "firecrawl": false,
+    "exa_search": false,
+    "mvp_mode": false,
+    "tdd_mode": false,
+    "text_mode": false,
+    "auto_advance": false,
+    "_auto_chain_active": false,
+    "mode": "yolo",
+    "sub_repos": [],
+    "pr_strict": false,
+    "resolve_model_ids": false,
+    "context_window": 200000,
+    "phase_naming": "sequential",
+    "project_code": null,
+    "subagent_timeout": 300000,
+    "model_overrides": null,
+    "agent_tools": null,
+    "models": null,
+    "granularity": "standard",
+    "granularities": null,
+    "planning": null,
+    "dynamic_routing": null,
+    "runtime": null,
+    "model_profile_overrides": null,
+    "model_policy": null,
+    "effort": null,
+    "fast_mode": null,
+    "agent_skills": {},
+    "agent_skills_security": null,
+    "phase_commit_docs": {},
+    "manager": {},
+    "response_language": null,
+    "claude_md_path": "./.claude/CLAUDE.md",
+    "claude_md_assembly": null,
+    "phase_id_convention": null,
+    "review": {
+      "max_prompt_tokens": null,
+      "models": {
+        "agy": "",
+        "claude": "",
+        "codex": "",
+        "cursor": "",
+        "gemini": "",
+        "kimi-code": "",
+        "llama_cpp": "",
+        "lm_studio": "",
+        "ollama": "",
+        "opencode": ""
+      },
+      "max_prompt_tokens_per_reviewer": {
+        "antigravity": -1,
+        "claude": -1,
+        "coderabbit": -1,
+        "codex": -1,
+        "cursor": -1,
+        "gemini": -1,
+        "kimi-code": -1,
+        "llama_cpp": -1,
+        "lm_studio": -1,
+        "ollama": -1,
+        "opencode": -1,
+        "qwen": -1
+      },
+      "timeouts": {
+
+===== gsd-tools state get 'Current Position' =====
+{
+  "Current Position": "Phase: 02 (execution-worktree-runner-billing-safety) — EXECUTING\nPlan: 2 of 18\nStatus: Ready to execute\nLast activity: 2026-07-26 — Phase 02 execution started\n\nProgress: [█████████░] 88%"
+}
+===== gsd-tools phases list --raw =====
+01-foundation-registry-state-machine
+02-execution-worktree-runner-billing-safety
+===== gsd-tools config-path =====
+/home/vibrantclouds/Development/gsd-core-herdr/test/fixtures/planning/1.14/executing/.planning/config.json
+===== gsd-tools config-get workflow.parallelization =====
+Error: Key not found: workflow.parallelization
