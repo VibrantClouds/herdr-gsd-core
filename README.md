@@ -17,11 +17,22 @@ Requirements: Herdr 0.9.0 or newer, Node 22 or newer, Linux or macOS. GSD-Core i
 
 ## Quick start
 
-1. Install, then open or restart Herdr. Every workspace whose repository has a `.planning/` shows `$gsd_phase $gsd_step $gsd_status $gsd_next` in the sidebar within a couple of seconds. Nothing needs configuring for this.
-2. Run the action **GSD: show config file** from Herdr's action palette. It creates `config.toml` if it does not exist yet and shows its path in a notification (normally `~/.config/herdr/plugins/config/herdr-gsd-core/config.toml`).
-3. Edit the file. To turn on supervised runs, set `enabled = true` under `[orchestration]`. If GSD is installed in a separate Claude config root, add its path under `[harness.claude-code.env]` (see Orchestration).
-4. Run the action **GSD: restart daemon**. The daemon reads the file only when it starts.
-5. Optional: open the dashboard pane and install a harness adapter for tool-level activity on the pane (both below).
+1. Install, then open or restart Herdr. The plugin's daemon starts and reports `$gsd_phase $gsd_step $gsd_status $gsd_next` on every workspace whose repository has a `.planning/`.
+2. Tell Herdr's sidebar to draw them. Herdr only renders plugin tokens that a row layout names, so add them to **Herdr's own** `~/.config/herdr/config.toml` and run `herdr server reload-config`:
+
+   ```toml
+   [ui.sidebar.spaces]
+   rows = [["state_icon", "workspace"], ["branch", "git_status"], ["$gsd_phase", "$gsd_status"]]
+
+   [ui.sidebar.agents]
+   rows = [["state_icon", "machine", "workspace", "tab"], ["agent", "$gsd_agent", "$gsd_tool"]]
+   ```
+
+   Any `$gsd_*` token can go in either layout; Herdr's `ui.sidebar.*.rows` reference documents per-token colours and rules. Without this step nothing is visible except notifications and the dashboard pane.
+3. Run the action **GSD: show config file** from Herdr's action palette. It creates `config.toml` if it does not exist yet and shows its path in a notification (normally `~/.config/herdr/plugins/config/herdr-gsd-core/config.toml`).
+4. Edit the file. To turn on supervised runs, set `enabled = true` under `[orchestration]`. If GSD is installed in a separate Claude config root, add its path under `[harness.claude-code.env]` (see Orchestration).
+5. Run the action **GSD: restart daemon**. The daemon reads the file only when it starts.
+6. Optional: open the dashboard pane and install a harness adapter for tool-level activity on the pane (both below).
 
 ## What you see
 
