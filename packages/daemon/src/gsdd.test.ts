@@ -275,3 +275,28 @@ test('lock: STATE.md.lock held → health locked, previous snapshot kept, gsd_er
     await r.fake.close();
   }
 });
+
+test('a project root spelled through a symlink resolves to the bound (real) path — macOS /var → /private/var', async () => {
+  const r = await rig();
+  r.fake.addWorkspace({ workspace_id: 'w1', focused: true });
+  r.fake.addPane({ workspace_id: 'w1', cwd: r.project, agent: 'claude', agent_status: 'idle' });
+  const link = path.join(r.dir, 'link-to-proj');
+  fs.symlinkSync(r.project, link);
+  const d = r.newDaemon();
+  await d.start();
+  try {
+    await waitFor(() => r.fake.tokensOf('w1'));
+    const c = new ControlClient(r.paths.controlSocket);
+    await c.connect();
+    const detail = await c.request<{ root: string }>('project.get', { root: link });
+    assert.equal(detail.root, r.project);
+    const recent = await c.request<unknown[]>('activity.recent', { root: link });
+    assert.ok(Array.isArray(recent));
+    const plan = await c.request<{ reasons: string[] }>('orchestrate.plan', { root: link, unit: 'phase' });
+    assert.ok(!plan.reasons.some((x) => x.includes('no bound project')), plan.reasons.join('; '));
+    c.close();
+  } finally {
+    await d.stop('test', false);
+    await r.fake.close();
+  }
+});

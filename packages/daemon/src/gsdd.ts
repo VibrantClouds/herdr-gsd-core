@@ -846,8 +846,34 @@ export class Daemon {
   /* control socket                                                      */
   /* ------------------------------------------------------------------ */
 
+  /**
+   * Project roots are keyed by the path Herdr reports for the pane, which is the
+   * *real* path. Callers (CLI, dashboard, tests) may spell the same directory through
+   * a symlink — macOS `/var/folders/…` → `/private/var/…`, `/tmp` → `/private/tmp`
+   * (caught by CI on macos-latest) — so every incoming `root` is canonicalised.
+   */
+  private canonicalRoot(root: string): string {
+    const resolved = path.resolve(root);
+    if (this.projects.has(resolved)) return resolved;
+    try {
+      const real = fs.realpathSync(resolved);
+      return real;
+    } catch {
+      return resolved;
+    }
+  }
+
   private registerControl(): void {
     const c = this.control;
+    // every handler sees params.root canonicalised (see canonicalRoot)
+    const register = c.register.bind(c);
+    c.register = (method, handler) =>
+      register(method, (params, conn) => {
+        if (params && typeof params === 'object' && typeof (params as { root?: unknown }).root === 'string') {
+          params = { ...(params as Record<string, unknown>), root: this.canonicalRoot((params as { root: string }).root) };
+        }
+        return handler(params, conn);
+      });
     c.register('ping', () => ({ pong: true, pid: process.pid, version: DAEMON_VERSION, uptimeMs: this.now() - this.startedAt }));
     c.register('status', () => this.status());
     c.register('projects.list', () => this.projectSummaries());
