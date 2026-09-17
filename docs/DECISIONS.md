@@ -382,3 +382,116 @@ and expiring by TTL — it lives for the whole session and never guards a write.
 **DECISION:** only `STATE.md.lock` and `.lock` gate reads. `milestone.lock` is read through
 (its `phase` is GSD's own claim of the phase being worked, which matches the position anyway).
 **Amends:** §3.1 (locks), §13 (M0-G lock row), `docs/COMPAT.md`.
+
+## M6 — live-projection corrections (2026-09-17)
+
+Five defects found against the owner's running daemon (two GSD projects, two non-GSD workspaces)
+and confirmed from GSD-Core 1.14.0's source and both projects' git history.
+
+### O9. Source precedence, written down once
+**Finding:** the plugin blends four sources but the order lived only in scattered comments, which
+is how O10–O12 each drifted in a different direction.
+**DECISION:** resolve in this order, and keep it here rather than re-deriving it per call site.
+1. `.planning/state.json` — GSD's published machine contract (per-phase status)
+2. `.planning/STATE.md` frontmatter, then its `## Current Position` body — the live declaration
+3. phase-directory artifacts — corroboration, and the **only** source for steps STATE.md has no
+   field for (code review, UI review, UAT), and the tiebreak when STATE.md's counters have gone
+   stale against them
+4. `.planning/ROADMAP.md` — milestone-level completion override
+
+**Considered and rejected: deriving state from "the newest planning document on disk."** Artifacts
+are written at the *end* of a step, so they are structurally one step behind; the next phase has no
+directory until GSD creates it (GPS.CommercialCRM: `phases/40-…` fully complete, no `41/`, STATE.md
+already on 41); mtimes are bulk-restamped by clone/checkout/rsync in three of six real local
+projects; and GSD's own `smart-entry.cjs` reads STATE.md first, so inverting the order would make
+the sidebar disagree with `/gsd-status`. Where artifacts *are* authoritative (O11) it is because
+STATE.md records nothing at all, not because the filesystem is generally more current.
+
+**Corollary — every cross-file comparison uses declared timestamps, never mtimes.** `last_updated`
+in STATE.md's frontmatter, `timestamp`/`paused_at` in `HANDOFF.json`. Filesystem mtimes are an
+artefact of how the tree was obtained.
+
+### O10. A pause marker must still describe the present
+**Finding (live):** GPS.CommercialCRM reported `gsd_status = paused` continuously from 2026-09-11
+to 2026-09-17. `.planning/HANDOFF.json` existed, recording `"phase": "34"`, while STATE.md had
+moved to phase 41. GSD never deletes the file, and the plugin treated its existence as the state.
+**DECISION:** `.continue-here.md` still pauses on presence — `/gsd-resume-work` consumes it, so it
+cannot go stale (O-pause above). `HANDOFF.json` is honoured only when it still describes the
+present: its `phase` matches the current phase, and its declared timestamp is not older than
+STATE.md's `last_updated`. An ignored marker becomes a diagnostic and is **not** placed on
+`snap.paused`, whose five consumers (`next` rules, notifier, both status derivations,
+`diffSnapshots`) all mean "paused now".
+
+### O11. Code review and verification exist only on disk
+**Finding:** GSD writes no `Status`, no `Current Plan` and no `Stopped At` during the code-review
+gate or verification. The complete `Status` writer set is `state-transition.cjs` + `state.cjs:6022`;
+none of it mentions review, UAT, gaps or humans. `Verifying Phase N` is a *recognizer* only
+(`state-document.cjs:680`) — no writer emits it. `workflows/code-review.md` touches STATE.md only
+to exclude it from a git diff. Confirmed live: CommercialCRM phase 40 wrote `40-REVIEW.md` at 15:49
+and `40-VERIFICATION.md` at 15:56 with **no STATE.md commit** between 15:36 and the 15:57
+transition; IDP phase 53 held `status: executing` across UAT, security review, verification and UI
+review.
+**DECISION:** add a `reviewing` phase status and a `review` step, derived from phase artifacts
+alone. The STATE.md status tables stay byte-identical to GSD's `state-document.cjs:637` — there is
+no status string to recognise. Artifact presence means *that step finished*, so the status shown is
+the step that comes next in `execute-phase.md`'s order:
+
+| evidence (summaries ≥ plans) | status |
+|---|---|
+| no REVIEW, no VERIFICATION | `reviewing` |
+| REVIEW present (`clean`/`issues_found`/`skipped`) | `verifying` |
+| VERIFICATION `status: passed` | `complete` |
+| VERIFICATION any other value, or present but unreadable | `verifying` |
+
+`NN-UI-REVIEW.md` also ends `-REVIEW.md` and is a different pass — it never satisfies the gate.
+Frontmatter reads stay column-0 anchored: CommercialCRM's real `40-VERIFICATION.md` carries a
+nested `re_verification.previous_status: gaps_found` beneath a top-level `status: passed`, the trap
+GSD warns about at `bin/lib/commands.cjs:142-144`.
+
+### O12. `state.json`'s phase list is always trusted; its milestone and `next` are not
+**Finding:** gating the whole file on `updated_at >= STATE.md mtime - 2s` discarded it on
+essentially every snapshot — `state-contract.cjs` publishes at 11 step boundaries while STATE.md is
+rewritten on every plan advance. Both live projects logged `state.json ignored as stale`
+continuously, leaving phase status to be inferred from counting PLAN/SUMMARY files. That is how
+phase 40 read `complete` while STATE.md said `executing` and state.json said `in_progress`.
+**DECISION:** per-phase statuses apply unconditionally. `milestone` and `next` keep the freshness
+gate — both are genuinely time-sensitive, and milestone identity belongs to ROADMAP.md. A phase
+state.json knows about but that has no directory is *not* injected into `snap.phases`: that field
+means "phases with artifacts on disk" to the dashboard, the `next` rules and `diffSnapshots`.
+
+### O13. "Every phase directory is complete" is not "the milestone is done"
+**Finding:** `.planning/phases/` holds only the current milestone's directories, and GSD creates
+the next phase's directory when it plans it. CommercialCRM had 37–40 all complete on disk while
+STATE.md was on 41.
+**DECISION:** two independent guards, because four of six real projects predate `state.json` and so
+cannot contribute a pending phase: every known phase must be complete **and** the phase STATE.md
+names must be one of them. A shipped milestone declares no current phase, so it still reads
+`complete`.
+
+### O14. The plan index comes from summaries when the counter is behind
+**Finding:** `advancePlan`'s phase-complete branch deliberately does not touch `Current Plan`
+(`state-transition.cjs:1448`), neither verify nor review writes it, and only `completePhase` resets
+it. CommercialCRM's phase-40 transition diff was `Plan: 4 of 10` → `Plan: Not started` while
+`stopped_at` read `Completed 40-09-PLAN.md`. GSD's own `state-snapshot` declines to publish the
+counter at all on the `executing/` fixture (`"current_plan": null`) where STATE.md says `2 of 18`
+over 17 summaries.
+**DECISION:** `total = max(declared, plans)`; the declared index stands while it is at or ahead of
+the summary count, otherwise the summaries win (`min(summaries + 1, total)` mid-execution, clamped
+to `total` once the phase is past execution). The step override is one-directional and capped at
+`verify` — it never walks backwards and never promotes to `ship`, which is STATE.md's and ROADMAP's
+call.
+
+### O15. A binding is dropped when it stops resolving, even if the workspace is still open
+**Finding (live):** workspaces w6 (`GPS.DocumentService.gRPC`) and w7 (`herdr-gsd-core`) — neither
+a GSD project — rendered phase 54 and phase 40/41 from two unrelated projects. Both binding
+timestamps match `resync (workspace.created)` lines in `gsdd.log` to the second: each was bound at
+the instant it was created, while its pane still reported the cwd it was spawned from. The prune
+required the workspace to have vanished from Herdr too, so nothing ever corrected it.
+**DECISION:** any non-manual binding a rebind pass does not re-affirm is deleted, open or not, and
+the workspace's tokens are cleared explicitly — workspace metadata carries no TTL (unlike pane
+metadata), so anything the daemon stops refreshing stays on screen forever. `workspace.created`
+additionally defers its binding decision to the debounced pass, and `rootForWorkspace` orders its
+candidate panes (focused → driver → agent-bearing → rest) instead of taking Map order.
+**Not adopted:** skipping panes whose cwd matches another bound workspace's root. Two workspaces
+legitimately open on one project are indistinguishable from the bug, and the prune above makes the
+guard unnecessary.

@@ -8,13 +8,30 @@ export type PhaseStatus =
   | 'discussed'
   | 'planned'
   | 'executing'
+  | 'reviewing'
   | 'verifying'
   | 'complete'
   | 'blocked';
 
 export type Health = 'ok' | 'no_planning' | 'locked' | 'parse_error' | 'tools_missing';
 
-export type Step = 'discuss' | 'plan' | 'execute' | 'verify' | 'ship';
+export type Step = 'discuss' | 'plan' | 'execute' | 'review' | 'verify' | 'ship';
+
+/**
+ * `NN-REVIEW.md` frontmatter (`agents/gsd-code-reviewer.md:273-291`). `skipped`
+ * means "no reviewable files — review was not performed", so it is evidence the
+ * gate was *passed*, not that a review happened.
+ */
+export interface PhaseReview {
+  /**
+   * `unknown` mirrors GSD's own reader sentinel (`bin/lib/verification.cjs:81-121`):
+   * the file exists but its `status` is absent or outside the emitter's set.
+   */
+  status: 'clean' | 'issues_found' | 'skipped' | 'unknown';
+  critical: number;
+  warning: number;
+  info: number;
+}
 
 export interface PhaseInfo {
   number: string;
@@ -23,6 +40,10 @@ export interface PhaseInfo {
   plans: number;
   summaries: number;
   uat?: 'pending' | 'pass' | 'fail';
+  /** `NN-REVIEW.md` — the code-review gate (`workflows/code-review.md:688`) */
+  review?: PhaseReview;
+  /** a `NN-UI-REVIEW.md` exists; a separate pass from the code review */
+  uiReview?: boolean;
 }
 
 export interface ProjectSnapshot {
@@ -136,7 +157,7 @@ export interface ActivityEvent {
 }
 
 /** Derived workspace-level status token (spec §3.3). */
-export type GsdStatus = 'idle' | 'planning' | 'executing' | 'verifying' | 'blocked' | 'paused' | 'complete';
+export type GsdStatus = 'idle' | 'planning' | 'executing' | 'reviewing' | 'verifying' | 'blocked' | 'paused' | 'complete';
 
 /** Change set emitted by the watcher after diffing snapshots (spec §4.2). */
 export type ChangeKey = 'phase' | 'step' | 'status' | 'blockers' | 'uat' | 'paused' | 'health' | 'human';

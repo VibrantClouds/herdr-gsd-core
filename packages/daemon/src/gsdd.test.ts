@@ -300,3 +300,81 @@ test('a project root spelled through a symlink resolves to the bound (real) path
     await r.fake.close();
   }
 });
+
+test('a workspace that moves out of a GSD tree loses its binding and its tokens', async () => {
+  // Reproduces the live incident: workspaces w6/w7 were bound at the instant
+  // `workspace.created` fired, while their panes still reported the cwd they
+  // were spawned from, and kept rendering another project's phase for hours
+  // because the prune required the workspace to have vanished from Herdr too.
+  const r = await rig();
+  const elsewhere = path.join(r.dir, 'not-gsd');
+  fs.mkdirSync(path.join(elsewhere, '.git'), { recursive: true });
+
+  r.fake.addWorkspace({ workspace_id: 'w1', focused: true });
+  r.fake.addPane({ workspace_id: 'w1', pane_id: 'w1:p1', cwd: r.project, agent: 'claude', agent_status: 'working' });
+  r.fake.addWorkspace({ workspace_id: 'w2' });
+  const stray = r.fake.addPane({ workspace_id: 'w2', pane_id: 'w2:p1', cwd: r.project, agent: 'claude', agent_status: 'working' });
+
+  const d = r.newDaemon();
+  await d.start();
+  try {
+    // both workspaces bound to the one project, both rendering its phase
+    await waitFor(() => r.fake.tokensOf('w2')?.gsd_phase);
+    assert.equal(d.bindings.get('w2')?.root, r.project);
+    assert.ok(r.fake.tokensOf('w1')?.gsd_phase);
+
+    // the stray workspace's shell cd's into a repo with no .planning
+    stray.cwd = elsewhere;
+    stray.foreground_cwd = elsewhere;
+    // re-emitted each poll: the event stream may still be connecting right after
+    // `start()` resolves, and a repeated `pane_updated` is a no-op once handled
+    const moved = (): void => r.fake.emit({ event: 'pane_updated', data: { type: 'pane_updated', pane: { ...stray } } } as never);
+    await waitFor(() => {
+      moved();
+      return d.bindings.get('w2') === undefined || undefined;
+    });
+    assert.equal(d.bindings.get('w2'), undefined, 'binding dropped even though w2 is still open in Herdr');
+
+    // workspace metadata carries no TTL, so it must be cleared explicitly
+    await waitFor(() => (r.fake.tokensOf('w2')?.gsd_phase === undefined ? true : undefined));
+    const cleared = r.fake.tokensOf('w2') ?? {};
+    for (const k of ['gsd_phase', 'gsd_phase_num', 'gsd_phase_name', 'gsd_step', 'gsd_status', 'gsd_next']) {
+      assert.equal(cleared[k], undefined, `${k} still on w2: ${JSON.stringify(cleared)}`);
+    }
+
+    // the real project is untouched
+    assert.equal(d.bindings.get('w1')?.root, r.project);
+    assert.ok(r.fake.tokensOf('w1')?.gsd_phase);
+  } finally {
+    await d.stop('test', false);
+    await r.fake.close();
+  }
+});
+
+test('a workspace whose last pane closed keeps its binding', async () => {
+  // Absence of evidence is not evidence of absence: a workspace that reports no
+  // cwd at all has not moved anywhere, and unbinding it would drop the project
+  // out from under an in-flight orchestrated run (caught by the M4 gate).
+  const r = await rig();
+  r.fake.addWorkspace({ workspace_id: 'w1', focused: true });
+  const only = r.fake.addPane({ workspace_id: 'w1', pane_id: 'w1:p1', cwd: r.project, agent: 'claude', agent_status: 'working' });
+  const d = r.newDaemon();
+  await d.start();
+  try {
+    await waitFor(() => r.fake.tokensOf('w1')?.gsd_phase);
+    assert.equal(d.bindings.get('w1')?.root, r.project);
+
+    r.fake.closePane(only.pane_id);
+    await waitFor(() => {
+      r.fake.emit({ event: 'pane_closed', data: { type: 'pane_closed', pane_id: only.pane_id, workspace_id: 'w1' } } as never);
+      return d.panes.get(only.pane_id) === undefined || undefined;
+    });
+    // give the debounced rebind room to run before asserting it did nothing
+    await new Promise((res) => setTimeout(res, 400));
+    assert.equal(d.bindings.get('w1')?.root, r.project, 'binding survives a workspace with no panes');
+    assert.equal(d.projects.has(r.project), true, 'and so does the project');
+  } finally {
+    await d.stop('test', false);
+    await r.fake.close();
+  }
+});

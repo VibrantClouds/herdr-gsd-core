@@ -1,7 +1,7 @@
 import { promises as nodeFs, type Dirent } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, relative, sep, basename } from 'node:path';
-import type { ChangeKey, GsdProjectConfig, GsdStatus, HumanStop, PhaseInfo, PhaseStatus, ProjectSnapshot, Step } from './types';
+import type { ChangeKey, GsdProjectConfig, GsdStatus, HumanStop, PhaseInfo, PhaseReview, PhaseStatus, ProjectSnapshot, Step } from './types';
 import { PlanningLockedError, waitForStateUnlocked, type LockWaitOptions } from './lock';
 import { recommendNext, trimNumber } from './next';
 import { assertReadOnly } from './readonly';
@@ -192,6 +192,8 @@ export function stepForStatus(status: string): Step | undefined {
       return 'plan';
     case 'executing':
       return 'execute';
+    case 'reviewing':
+      return 'review';
     case 'verifying':
     case 'verify':
       return 'verify';
@@ -204,6 +206,52 @@ export function stepForStatus(status: string): Step | undefined {
     default:
       return undefined;
   }
+}
+
+/**
+ * STATE.md's declared step, corrected by the current phase's artifacts when —
+ * and only when — those artifacts prove execution is already finished.
+ *
+ * GSD writes no `Status` during the code-review gate or verification
+ * (`workflows/code-review.md` touches STATE.md only to exclude it from a git
+ * diff), so STATE.md sits on `executing` for the whole back half of a phase.
+ * The override is deliberately one-directional and capped at `verify`: it never
+ * walks a step *backwards*, and never promotes to `ship`, because milestone
+ * completion is STATE.md's and ROADMAP's call, not a phase directory's.
+ */
+export function advancedStep(declared: Step | undefined, fromPhase: Step | undefined): Step | undefined {
+  if (fromPhase !== 'review' && fromPhase !== 'verify') return declared;
+  if (declared === undefined) return fromPhase;
+  const rank: Record<Step, number> = { discuss: 0, plan: 1, execute: 2, review: 3, verify: 4, ship: 5 };
+  return rank[fromPhase] > rank[declared] ? fromPhase : declared;
+}
+
+/**
+ * The plan index GSD actually reached, which is not always the one it wrote
+ * down. `advancePlan`'s phase-complete branch deliberately does not touch
+ * `Current Plan` (`state-transition.cjs:1448` pushes only `Status`,
+ * `Last Activity` and `Current Position`), and neither `verify-work` nor
+ * `code-review` writes it at all — only `completePhase` resets it. Live: at
+ * GPS.CommercialCRM's phase-40 transition the diff was `Plan: 4 of 10` →
+ * `Plan: Not started` while `stopped_at` read `Completed 40-09-PLAN.md`.
+ *
+ * `*-SUMMARY.md` files are monotone committed evidence, so when the declared
+ * counter is behind them the summaries win.
+ */
+export function reconcilePlanPosition(
+  declared: { id: string; index: number; total: number } | undefined,
+  phase: Pick<PhaseInfo, 'plans' | 'summaries' | 'status'> | undefined,
+  phaseNumber: string | undefined,
+): { id: string; index: number; total: number } | undefined {
+  if (!phase || phase.plans === 0) return declared;
+  const total = Math.max(declared?.total ?? 0, phase.plans);
+  const pastExecution = phase.status === 'reviewing' || phase.status === 'verifying' || phase.status === 'complete';
+  let index = declared?.index ?? 0;
+  if (index < phase.summaries) index = pastExecution ? phase.summaries : Math.min(phase.summaries + 1, total);
+  if (pastExecution) index = Math.min(index === 0 ? total : index, total);
+  if (index <= 0 || total <= 0) return declared;
+  const pad = String(index).padStart(2, '0');
+  return { id: phaseNumber ? `${phaseNumber}-${pad}` : pad, index, total };
 }
 
 const PLACEHOLDER_BLOCKERS = new Set(['none', 'none yet', 'none.', 'none yet.', 'n/a', '-', '—', '(none)', '*(none)*', 'tbd']);
@@ -377,10 +425,21 @@ export function parseRoadmapCheckboxes(roadmap: string): Map<string, boolean> {
  * | plans == 0, NN-CONTEXT.md or NN-DISCUSSION-LOG.md   | Pending                    | `discussed`      |
  * | plans > 0, summaries == 0                           | Planned                    | `planned`        |
  * | 0 < summaries < plans                               | In Progress                | `executing`      |
+ * | summaries >= plans, no REVIEW, no VERIFICATION       | Executed                   | `reviewing`      |
+ * | summaries >= plans, REVIEW, no VERIFICATION          | Executed                   | `verifying`      |
  * | summaries >= plans, VERIFICATION fm status=passed    | Complete                   | `complete`       |
  * | summaries >= plans, fm status=human_needed           | Needs Review               | `verifying`      |
  * | summaries >= plans, fm status=gaps_found             | Executed                   | `verifying`      |
- * | summaries >= plans, no VERIFICATION / other value    | Executed                   | `verifying`      |
+ * | summaries >= plans, VERIFICATION other value         | Executed                   | `verifying`      |
+ *
+ * The `reviewing` rung exists because GSD writes **nothing** to STATE.md during
+ * either the code-review gate or verification — no `Status`, no `Current Plan`,
+ * no `Stopped At` (settled against 1.14.0: the complete `Status` writer set is
+ * `state-transition.cjs` + `state.cjs:6022`, and `workflows/code-review.md`
+ * touches STATE.md only to exclude it from a git diff). The phase artifacts are
+ * the only source. Artifact presence means *that step finished*, so the status
+ * rendered is the step that comes next in `execute-phase.md`'s order
+ * (`aggregate_results → code_review_gate → verify_phase_goal → transition`).
  *
  * Overrides applied afterwards, in this order:
  *   1. ROADMAP Progress `Status == Complete`, or `## Phases` `- [x]`      → `complete`
@@ -399,10 +458,20 @@ export function derivePhaseStatus(ev: {
   summaries: number;
   hasContext: boolean;
   verification?: string;
+  /**
+   * a `NN-VERIFICATION.md` exists. Distinct from `verification`, which is that
+   * file's frontmatter `status` and is absent both when there is no file *and*
+   * when the file cannot be read — a present-but-unparseable report still means
+   * verification has been reached.
+   */
+  hasVerification?: boolean;
+  /** a `NN-REVIEW.md` exists (any `status`, including `skipped`) */
+  hasReview?: boolean;
 }): PhaseStatus {
   if (ev.plans === 0) return ev.hasContext ? 'discussed' : 'not_started';
   if (ev.summaries === 0) return 'planned';
   if (ev.summaries < ev.plans) return 'executing';
+  if (!(ev.hasVerification ?? ev.verification !== undefined)) return ev.hasReview ? 'verifying' : 'reviewing';
   return ev.verification === 'passed' ? 'complete' : 'verifying';
 }
 
@@ -671,18 +740,25 @@ async function scanPhases(fs: PlanningFs, planningDir: string, diagnostics: stri
     const hasContext = names.some((n) => n.endsWith('-CONTEXT.md') || n.endsWith('-DISCUSSION-LOG.md'));
     const verifName = names.find((n) => n.endsWith('-VERIFICATION.md') || n === 'VERIFICATION.md');
     const uatName = names.find((n) => n.endsWith('-UAT.md') || n === 'UAT.md');
+    // `NN-UI-REVIEW.md` also ends with `-REVIEW.md`; it is a separate pass and
+    // must never be mistaken for the code-review gate.
+    const uiReview = names.some((n) => isUiReviewFile(n));
+    const reviewName = names.find((n) => isReviewFile(n));
     let verification: string | undefined;
     if (verifName) verification = await frontmatterStatus(fs, join(dir, verifName), ['status']);
     let uat: 'pending' | 'pass' | 'fail' | undefined;
     if (uatName) uat = mapUatStatus(await frontmatterStatus(fs, join(dir, uatName), ['status', 'result']));
+    const review = reviewName ? await readPhaseReview(fs, join(dir, reviewName)) : undefined;
     out.push({
       number,
       slug: m[2] as string,
       dir: e.name,
       plans,
       summaries,
-      status: derivePhaseStatus({ plans, summaries, hasContext, ...(verification ? { verification } : {}) }),
+      status: derivePhaseStatus({ plans, summaries, hasContext, hasVerification: verifName !== undefined, hasReview: reviewName !== undefined, ...(verification ? { verification } : {}) }),
       ...(uat ? { uat } : {}),
+      ...(review ? { review } : {}),
+      ...(uiReview ? { uiReview: true } : {}),
     });
   }
   out.sort((a, b) => cmpPhaseNumber(a.number, b.number));
@@ -695,6 +771,77 @@ export function isPlanFile(name: string): boolean {
 }
 export function isSummaryFile(name: string): boolean {
   return name.endsWith('-SUMMARY.md') || name === 'SUMMARY.md';
+}
+
+/** `workflows/ui-phase.md`'s pass — checked first, because it also ends `-REVIEW.md`. */
+export function isUiReviewFile(name: string): boolean {
+  return name.endsWith('-UI-REVIEW.md') || name === 'UI-REVIEW.md';
+}
+
+/** The code-review gate's artifact (`workflows/code-review.md:688`), never the UI one. */
+export function isReviewFile(name: string): boolean {
+  if (isUiReviewFile(name)) return false;
+  return name.endsWith('-REVIEW.md') || name === 'REVIEW.md';
+}
+
+/** The raw text between the frontmatter fences, or `''` when there is none. */
+function frontmatterBlock(text: string): string {
+  if (!/^---\r?\n/.test(text)) return '';
+  const lines = text.split(/\r?\n/);
+  for (let i = 1; i < lines.length; i++) {
+    if ((lines[i] as string).trim() === '---') return lines.slice(1, i).join('\n');
+  }
+  return '';
+}
+
+/**
+ * One level of a nested frontmatter map, e.g. `findings:` → `{critical: '0'}`.
+ *
+ * `parseFrontmatter` is anchored at column 0 and so skips nested keys entirely,
+ * which is what keeps `re_verification.previous_status: gaps_found` from being
+ * read as the top-level `status` — GSD warns about exactly that substring trap
+ * (`bin/lib/commands.cjs:142-144`). This reader keeps the same discipline: it
+ * only descends under the one named parent key.
+ */
+function frontmatterNested(block: string, key: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const lines = block.split(/\r?\n/);
+  const head = new RegExp(`^${escapeRe(key)}:[ \\t]*$`);
+  let i = lines.findIndex((l) => head.test(l as string));
+  if (i === -1) return out;
+  for (i += 1; i < lines.length; i++) {
+    const line = lines[i] as string;
+    if (line.trim() === '') continue;
+    const m = /^[ \t]+([A-Za-z0-9_-]+):[ \t]*(.*)$/.exec(line);
+    if (!m) break; // back at column 0, or a list item: the nested block ended
+    out[m[1] as string] = (m[2] as string).trim();
+  }
+  return out;
+}
+
+const REVIEW_STATUSES = new Set<PhaseReview['status']>(['clean', 'issues_found', 'skipped']);
+
+/** `NN-REVIEW.md` frontmatter (`agents/gsd-code-reviewer.md:273-291`). */
+async function readPhaseReview(fs: PlanningFs, file: string): Promise<PhaseReview | undefined> {
+  let text: string;
+  try {
+    text = await fs.readFile(file);
+  } catch {
+    return undefined;
+  }
+  const { fm } = parseFrontmatter(text);
+  const raw = fm['status'] as PhaseReview['status'] | undefined;
+  const findings = frontmatterNested(frontmatterBlock(text), 'findings');
+  const count = (k: string): number => {
+    const n = Number(findings[k]);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  };
+  return {
+    status: raw !== undefined && REVIEW_STATUSES.has(raw) ? raw : 'unknown',
+    critical: count('critical'),
+    warning: count('warning'),
+    info: count('info'),
+  };
 }
 
 /** GSD reads the VERIFICATION status from the **frontmatter only** (#1159). */
@@ -788,7 +935,7 @@ export async function readProjectSnapshot(root: string, opts: ReadSnapshotOption
   const pausedAt = field('paused_at', 'Paused at');
   const statusRaw = field('status', 'Status', positionSlice);
   const status = normalizeStateStatus(statusRaw, pausedAt);
-  const step = stepForStatus(status);
+  const declaredStep = stepForStatus(status);
 
   // phase number/slug: frontmatter first, then the `## Current Position` slice
   let phaseNumber = fm['current_phase'];
@@ -813,14 +960,14 @@ export async function readProjectSnapshot(root: string, opts: ReadSnapshotOption
   }
 
   const planLine = stateExtractField(positionSlice, 'Plan');
-  let plan: { id: string; index: number; total: number } | undefined;
+  let statePlan: { id: string; index: number; total: number } | undefined;
   if (planLine) {
     const m = /(\d+)\s+of\s+(\d+)/i.exec(planLine);
     if (m) {
       const index = Number(m[1]);
       const total = Number(m[2]);
       const pad = String(index).padStart(2, '0');
-      plan = { id: phaseNumber ? `${phaseNumber}-${pad}` : pad, index, total };
+      statePlan = { id: phaseNumber ? `${phaseNumber}-${pad}` : pad, index, total };
     }
   }
   const waveLine = stateExtractField(positionSlice, 'Wave');
@@ -853,25 +1000,41 @@ export async function readProjectSnapshot(root: string, opts: ReadSnapshotOption
   let nextFromStateJson: { command: string; label?: string; reason?: string } | undefined;
   if (isObj(stateJson)) {
     const updatedAt = Date.parse(str(stateJson['updated_at']) ?? '');
-    const fresh = !Number.isNaN(updatedAt) && updatedAt >= stateMtime - 2000;
-    if (!fresh) {
+    /**
+     * `state.json` is a **best-effort publisher**: `state-contract.cjs` writes it
+     * at 11 step-boundary commands only, while STATE.md is rewritten on every
+     * plan advance. Gating the phase list on `updated_at >= STATE.md mtime` threw
+     * GSD's own record away on essentially every snapshot (both live projects
+     * logged `state.json ignored as stale` continuously), leaving phase status to
+     * be inferred from counting PLAN/SUMMARY files — which is how phase 40 read
+     * `complete` while STATE.md said `executing` and state.json said
+     * `in_progress`. The per-phase statuses are now always trusted; only `next`,
+     * which genuinely does go stale, keeps the freshness gate — as does
+     * `milestone`, whose identity is time-sensitive and owned by ROADMAP.md.
+     */
+    const jsonPhases = Array.isArray(stateJson['phases']) ? stateJson['phases'] : [];
+    for (const raw of jsonPhases) {
+      if (!isObj(raw)) continue;
+      const n = str(raw['number']);
+      if (!n) continue;
+      const s = str(raw['status']);
+      const target = phases.find((p) => trimNumber(p.number) === trimNumber(n));
+      // A phase state.json knows about but that has no directory yet is left
+      // out: `snap.phases` means "phases with artifacts on disk" to the
+      // dashboard, the `next` rules and `diffSnapshots`, and widening it here
+      // would change all three. `milestoneComplete` (projection.ts) guards the
+      // "last built phase is done, milestone is not" case on its own.
+      if (!target) continue;
+      if (s === 'complete') target.status = 'complete';
+      else if (s === 'in_progress' && target.status !== 'verifying' && target.status !== 'reviewing') target.status = 'executing';
+      // `pending` is lossy by design (spike §2.3) — keep the filesystem value
+    }
+    if (Number.isNaN(updatedAt) || updatedAt < stateMtime - 2000) {
       diagnostics.push(
-        `state.json ignored as stale (updated_at=${str(stateJson['updated_at']) ?? 'invalid'}, STATE.md mtime=${new Date(stateMtime).toISOString()})`,
+        `state.json ignored as stale for milestone/next (updated_at=${str(stateJson['updated_at']) ?? 'invalid'}, STATE.md mtime=${new Date(stateMtime).toISOString()}); phase statuses still applied`,
       );
     } else {
       milestone = str(stateJson['milestone']) ?? milestone;
-      const jsonPhases = Array.isArray(stateJson['phases']) ? stateJson['phases'] : [];
-      for (const raw of jsonPhases) {
-        if (!isObj(raw)) continue;
-        const n = str(raw['number']);
-        if (!n) continue;
-        const target = phases.find((p) => trimNumber(p.number) === trimNumber(n));
-        if (!target) continue;
-        const s = str(raw['status']);
-        if (s === 'complete') target.status = 'complete';
-        else if (s === 'in_progress' && target.status !== 'verifying') target.status = 'executing';
-        // `pending` is lossy by design (spike §2.3) — keep the filesystem value
-      }
       const n = isObj(stateJson['next']) ? stateJson['next'] : undefined;
       const cmd = n ? str(n['command']) : undefined;
       if (n && cmd) {
@@ -887,9 +1050,41 @@ export async function readProjectSnapshot(root: string, opts: ReadSnapshotOption
   // ---- walk: lastActivity + pause markers ------------------------------
   const walk = await walkPlanning(fs, planningDir);
   let paused: { file: string; at: number } | undefined;
-  const marker = walk.continueHere.sort((a, b) => b.at - a.at)[0] ?? walk.handoff;
-  if (marker) paused = { file: marker.file, at: marker.at };
-  else if (pausedAt !== undefined && collapse(pausedAt).toLowerCase() !== 'none') paused = { file: 'STATE.md', at: stateMtime };
+  /**
+   * `.continue-here.md` still pauses on presence — `/gsd-resume-work` consumes
+   * it, so it cannot go stale (see DECISIONS O-pause).
+   *
+   * `HANDOFF.json` can and does: GSD never deletes it, so GPS.CommercialCRM
+   * rendered `gsd_status = paused` for six days off a 2026-09-11 handoff that
+   * recorded phase 34 while STATE.md had moved on to phase 41. It is honoured
+   * only when it still describes the present — it names the current phase, and
+   * it is not older than STATE.md's own `last_updated`.
+   *
+   * Both comparisons use *declared* timestamps, never mtimes: clone, checkout
+   * and rsync restamp `.planning/` wholesale (three of six real local projects
+   * carry bulk-restamped trees), which would make every marker look brand new.
+   *
+   * An ignored marker is reported as a diagnostic rather than kept on the
+   * snapshot: `snap.paused` has five consumers (the `next` rules, the notifier,
+   * both status derivations and `diffSnapshots`) and each means "paused now".
+   */
+  const stateUpdatedAt = Date.parse(fm['last_updated'] ?? '');
+  const continueHere = [...walk.continueHere].sort((a, b) => b.at - a.at)[0];
+  if (continueHere) paused = { file: continueHere.file, at: continueHere.at };
+  else if (walk.handoff) {
+    const m = walk.handoff;
+    const doc = await readJsonFile(fs, join(planningDir, m.file));
+    const handoffPhase = isObj(doc) ? str(doc['phase']) : undefined;
+    const handoffAt = isObj(doc) ? Date.parse(str(doc['timestamp']) ?? str(doc['paused_at']) ?? '') : NaN;
+    if (phaseNumber !== undefined && handoffPhase !== undefined && trimNumber(handoffPhase) !== trimNumber(phaseNumber)) {
+      diagnostics.push(`pause marker ${m.file} ignored: records phase ${handoffPhase}, current phase is ${phaseNumber}`);
+    } else if (!Number.isNaN(handoffAt) && !Number.isNaN(stateUpdatedAt) && handoffAt < stateUpdatedAt) {
+      diagnostics.push(`pause marker ${m.file} ignored as stale (handoff=${new Date(handoffAt).toISOString()}, STATE.md last_updated=${new Date(stateUpdatedAt).toISOString()})`);
+    } else {
+      paused = { file: m.file, at: m.at };
+    }
+  }
+  if (!paused && pausedAt !== undefined && collapse(pausedAt).toLowerCase() !== 'none') paused = { file: 'STATE.md', at: stateMtime };
 
   // ---- blocked ---------------------------------------------------------
   // `blocked` is plugin-derived, never a GSD value, and only the **current**
@@ -932,6 +1127,17 @@ export async function readProjectSnapshot(root: string, opts: ReadSnapshotOption
   if (config) snap.config = config;
 
   const currentPhase = phaseNumber !== undefined ? snap.phases.find((p) => trimNumber(p.number) === trimNumber(phaseNumber as string)) : undefined;
+  const plan = reconcilePlanPosition(statePlan, currentPhase, phaseNumber);
+  /**
+   * STATE.md declares the step; the current phase's artifacts are the only
+   * source for the two steps it never records. GSD writes no `Status` during
+   * either the code-review gate or verification, so a STATE.md that still says
+   * `executing` while every plan has a summary is simply behind its own
+   * evidence — defer to the phase, and only for the *current* phase (IDP's
+   * `53-VERIFICATION.md` was reconciled after phase 54 had already opened).
+   */
+  const phaseStep = currentPhase ? stepForStatus(currentPhase.status) : undefined;
+  const step = advancedStep(declaredStep, phaseStep);
   if (phaseNumber !== undefined || plan || wave !== undefined || step) {
     snap.position = {};
     if (phaseNumber !== undefined) {
@@ -1104,6 +1310,7 @@ const PHASE_TO_GSD_STATUS: Record<PhaseStatus, GsdStatus> = {
   discussed: 'planning',
   planned: 'planning',
   executing: 'executing',
+  reviewing: 'reviewing',
   verifying: 'verifying',
   complete: 'complete',
   blocked: 'blocked',
