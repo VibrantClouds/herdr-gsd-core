@@ -350,3 +350,31 @@ test('a workspace that moves out of a GSD tree loses its binding and its tokens'
     await r.fake.close();
   }
 });
+
+test('a workspace whose last pane closed keeps its binding', async () => {
+  // Absence of evidence is not evidence of absence: a workspace that reports no
+  // cwd at all has not moved anywhere, and unbinding it would drop the project
+  // out from under an in-flight orchestrated run (caught by the M4 gate).
+  const r = await rig();
+  r.fake.addWorkspace({ workspace_id: 'w1', focused: true });
+  const only = r.fake.addPane({ workspace_id: 'w1', pane_id: 'w1:p1', cwd: r.project, agent: 'claude', agent_status: 'working' });
+  const d = r.newDaemon();
+  await d.start();
+  try {
+    await waitFor(() => r.fake.tokensOf('w1')?.gsd_phase);
+    assert.equal(d.bindings.get('w1')?.root, r.project);
+
+    r.fake.closePane(only.pane_id);
+    await waitFor(() => {
+      r.fake.emit({ event: 'pane_closed', data: { type: 'pane_closed', pane_id: only.pane_id, workspace_id: 'w1' } } as never);
+      return d.panes.get(only.pane_id) === undefined || undefined;
+    });
+    // give the debounced rebind room to run before asserting it did nothing
+    await new Promise((res) => setTimeout(res, 400));
+    assert.equal(d.bindings.get('w1')?.root, r.project, 'binding survives a workspace with no panes');
+    assert.equal(d.projects.has(r.project), true, 'and so does the project');
+  } finally {
+    await d.stop('test', false);
+    await r.fake.close();
+  }
+});

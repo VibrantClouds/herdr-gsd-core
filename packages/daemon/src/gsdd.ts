@@ -408,9 +408,14 @@ export class Daemon {
   /** Discover / refresh bindings for every known workspace (spec §4.1). */
   private async rebind(): Promise<void> {
     const seen = new Set<string>();
+    /** workspaces that told us nothing this pass — their bindings are left alone */
+    const silent = new Set<string>();
     for (const ws of this.workspaces.values()) {
-      const root = await this.rootForWorkspace(ws);
-      if (!root) continue;
+      const { root, sawCwd } = await this.resolveWorkspace(ws);
+      if (!root) {
+        if (!sawCwd) silent.add(ws.workspace_id);
+        continue;
+      }
       seen.add(ws.workspace_id);
       const existing = this.bindings.get(ws.workspace_id);
       const via: Binding['via'] = ws.worktree?.checkout_path ? 'worktree' : 'pane_cwd';
@@ -422,7 +427,7 @@ export class Daemon {
     // pane's shell had cd'd into the project — kept that root forever and went on
     // rendering another project's phase in its sidebar.
     for (const b of this.bindings.all()) {
-      if (b.via === 'manual' || seen.has(b.workspaceId)) continue;
+      if (b.via === 'manual' || seen.has(b.workspaceId) || silent.has(b.workspaceId)) continue;
       this.bindings.delete(b.workspaceId);
       this.log.info('binding dropped', { workspaceId: b.workspaceId, root: b.root, stillOpen: this.workspaces.has(b.workspaceId) });
       const p = this.projects.get(b.root);
@@ -444,7 +449,16 @@ export class Daemon {
   }
 
   /** Workspaces have no cwd (spike M0-H): derive from worktree checkout_path or the panes' cwd. */
-  private async rootForWorkspace(ws: WorkspaceInfo): Promise<string | undefined> {
+  /**
+   * `sawCwd` distinguishes the two ways this can fail to find a root, which the
+   * prune in `rebind` must treat very differently:
+   *   - the workspace reported directories and none is a GSD project → it has
+   *     genuinely moved out of the tree, so the binding is wrong
+   *   - the workspace reported no directory at all (its last pane just closed,
+   *     or the panes have not reported a cwd yet) → no evidence either way, so
+   *     the existing binding stands. Unbinding here would drop a project mid-run.
+   */
+  private async resolveWorkspace(ws: WorkspaceInfo): Promise<{ root?: string; sawCwd: boolean }> {
     const candidates: string[] = [];
     if (ws.worktree?.checkout_path) candidates.push(ws.worktree.checkout_path);
     // Ordered, not "whatever `this.panes` iterates first": the focused pane, then
@@ -457,11 +471,12 @@ export class Daemon {
       if (p.foreground_cwd) candidates.push(p.foreground_cwd);
       if (p.cwd) candidates.push(p.cwd);
     }
-    for (const c of [...new Set(candidates)]) {
+    const unique = [...new Set(candidates)];
+    for (const c of unique) {
       const root = await findPlanningRoot(c);
-      if (root) return root;
+      if (root) return { root, sawCwd: true };
     }
-    return undefined;
+    return { sawCwd: unique.length > 0 };
   }
 
   private async ensureProjectsForBindings(): Promise<void> {
