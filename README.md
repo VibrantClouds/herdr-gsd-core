@@ -69,8 +69,8 @@ Then run the action **GSD: restart daemon** so the running daemon picks up the n
 |---|---|---|
 | `gsd_phase` | `03 auth` | current phase, number and name |
 | `gsd_phase_num`, `gsd_phase_name` | `03`, `auth` | the same split in two, for narrow sidebar rows |
-| `gsd_step` | `execute 2/4` | current step, plan index of total |
-| `gsd_status` | `executing`, `verifying`, `blocked`, `paused`, `complete` | `blocked` also when STATE.md has `## Needs Human`, `## Deferred Verification` or blockers |
+| `gsd_step` | `execute 2/4` | current step, plan index of total. `review` and `verify` come from the phase's `NN-REVIEW.md` / `NN-VERIFICATION.md`, because GSD writes no status to STATE.md during either |
+| `gsd_status` | `executing`, `reviewing`, `verifying`, `blocked`, `paused`, `complete` | `reviewing` is the code-review gate, `verifying` is verification proper. `blocked` also when STATE.md has `## Needs Human`, `## Deferred Verification` or blockers, or the phase's review reported a critical finding |
 | `gsd_next` | `verify-work 3` | GSD's own recommended next command |
 | `gsd_err` | `STATE.md locked` | only when something is wrong |
 

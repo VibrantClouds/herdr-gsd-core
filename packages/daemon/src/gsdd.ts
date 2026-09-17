@@ -24,7 +24,7 @@ import { ControlError, ControlServer, type ControlConnection } from './control';
 import { Logger } from './log';
 import { Notifier } from './notifier';
 import { daemonPaths, pluginEnv, type DaemonPaths, type PluginEnv } from './paths';
-import { paneTitle, paneTokens, statusFromSnapshot, tokenDelta, workspaceTokens, type PaneTokens, type WorkspaceTokens } from './projection';
+import { CLEARED_WORKSPACE_TOKENS, paneTitle, paneTokens, statusFromSnapshot, tokenDelta, workspaceTokens, type PaneTokens, type WorkspaceTokens } from './projection';
 import { Orchestrator, RunStore, describeRun, type RunRecord, type RunUnit, type StartSpec } from './orchestration';
 import type { ActivityPushEvent, AgentStatusEvent, ProjectDetail, ProjectSummary, PromptResult, RunChangedEvent, SnapshotChangedEvent, StatusResult } from './protocol';
 import { SeqStore } from './seq';
@@ -250,7 +250,7 @@ export class Daemon {
     for (const p of this.projects.values()) p.watcher?.stop();
     if (clearTokens && this.herdrConnected) {
       for (const p of this.projects.values()) {
-        for (const wsId of p.wsTokens.keys()) await this.reportWorkspace(wsId, { gsd_phase: null, gsd_phase_num: null, gsd_phase_name: null, gsd_step: null, gsd_status: null, gsd_next: null, gsd_err: null }).catch(() => undefined);
+        for (const wsId of p.wsTokens.keys()) await this.reportWorkspace(wsId, CLEARED_WORKSPACE_TOKENS).catch(() => undefined);
         if (p.driverPaneId) await this.reportPane(p.driverPaneId, { gsd_agent: null, gsd_workers: null, gsd_ctx: null, gsd_tool: null }, undefined).catch(() => undefined);
       }
     }
@@ -416,19 +416,44 @@ export class Daemon {
       const via: Binding['via'] = ws.worktree?.checkout_path ? 'worktree' : 'pane_cwd';
       this.bindings.set({ workspaceId: ws.workspace_id, root, role: existing?.role ?? 'observer', driverPaneId: existing?.driverPaneId, via, updatedAt: this.now() });
     }
+    // A binding that this pass did not re-affirm is gone, *including* one whose
+    // workspace is still open in Herdr. Requiring the workspace to have vanished
+    // too meant a workspace bound once — e.g. at `workspace.created`, before its
+    // pane's shell had cd'd into the project — kept that root forever and went on
+    // rendering another project's phase in its sidebar.
     for (const b of this.bindings.all()) {
-      if (b.via !== 'manual' && !seen.has(b.workspaceId) && !this.workspaces.has(b.workspaceId)) this.bindings.delete(b.workspaceId);
+      if (b.via === 'manual' || seen.has(b.workspaceId)) continue;
+      this.bindings.delete(b.workspaceId);
+      this.log.info('binding dropped', { workspaceId: b.workspaceId, root: b.root, stillOpen: this.workspaces.has(b.workspaceId) });
+      const p = this.projects.get(b.root);
+      p?.wsTokens.delete(b.workspaceId);
+      if (this.workspaces.has(b.workspaceId)) await this.clearWorkspaceTokens(b.workspaceId);
     }
     await this.ensureProjectsForBindings();
     this.assignRoles();
+  }
+
+  /**
+   * Workspace metadata is reported without a TTL (unlike pane metadata), so
+   * Herdr keeps rendering whatever it was last told until something overwrites
+   * it. Anything that stops owning a workspace must clear it explicitly.
+   */
+  private async clearWorkspaceTokens(workspaceId: string): Promise<void> {
+    if (!this.herdrConnected) return;
+    await this.reportWorkspace(workspaceId, CLEARED_WORKSPACE_TOKENS).catch((e) => this.log.warn('token clear failed', { workspaceId, error: (e as Error).message }));
   }
 
   /** Workspaces have no cwd (spike M0-H): derive from worktree checkout_path or the panes' cwd. */
   private async rootForWorkspace(ws: WorkspaceInfo): Promise<string | undefined> {
     const candidates: string[] = [];
     if (ws.worktree?.checkout_path) candidates.push(ws.worktree.checkout_path);
-    for (const p of this.panes.values()) {
-      if (p.workspace_id !== ws.workspace_id) continue;
+    // Ordered, not "whatever `this.panes` iterates first": the focused pane, then
+    // the pane already known to drive this workspace, then the rest. Otherwise an
+    // incidental pane parked in another project's tree decides for the workspace.
+    const mine = [...this.panes.values()].filter((p) => p.workspace_id === ws.workspace_id);
+    const driverPaneId = this.bindings.get(ws.workspace_id)?.driverPaneId;
+    const rank = (p: PaneInfo): number => (p.pane_id === this.focusedPaneId ? 0 : p.pane_id === driverPaneId ? 1 : p.agent ? 2 : 3);
+    for (const p of mine.sort((a, b) => rank(a) - rank(b))) {
       if (p.foreground_cwd) candidates.push(p.foreground_cwd);
       if (p.cwd) candidates.push(p.cwd);
     }
@@ -445,6 +470,10 @@ export class Daemon {
     for (const [root, p] of this.projects) {
       if (!wanted.has(root)) {
         p.watcher?.stop();
+        // Any workspace still showing this project's tokens must be cleared:
+        // workspace metadata has no TTL, so it would otherwise stay on screen.
+        for (const workspaceId of p.wsTokens.keys()) if (this.workspaces.has(workspaceId)) await this.clearWorkspaceTokens(workspaceId);
+        if (p.driverPaneId) await this.reportPane(p.driverPaneId, { gsd_agent: null, gsd_workers: null, gsd_ctx: null, gsd_tool: null }, undefined).catch(() => undefined);
         this.projects.delete(root);
         this.log.info('project unbound', root);
       }
@@ -678,7 +707,14 @@ export class Daemon {
           return;
         }
         if (ws) this.workspaces.set(ws.workspace_id, ws);
-        if (name === 'workspace.created') await this.resync(name);
+        // A just-created workspace's pane still reports the cwd it was spawned
+        // from — the shell has not cd'd yet — so binding on this event's own tick
+        // attributes the new workspace to the *previous* project. Learn the
+        // structure now, decide the binding on the debounced pass.
+        if (name === 'workspace.created') {
+          await this.resync(name);
+          await this.rebindSoon();
+        }
         return;
       }
       if (name.startsWith('worktree.')) {

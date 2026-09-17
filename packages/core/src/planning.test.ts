@@ -10,9 +10,13 @@ import {
   derivePhaseStatus,
   deriveGsdStatus,
   diffSnapshots,
+  advancedStep,
   isPlanFile,
+  isReviewFile,
   isSentinelPhaseId,
   isSummaryFile,
+  isUiReviewFile,
+  reconcilePlanPosition,
   locateFieldRow,
   mapUatStatus,
   nextFromSmartEntry,
@@ -32,7 +36,7 @@ import {
   type PlanningFs,
   type PlanningStat,
 } from './planning';
-import type { ProjectSnapshot } from './types';
+import type { PhaseInfo, ProjectSnapshot } from './types';
 import { ThrottledRunner, type RunResult, type ToolsLocation } from './tools';
 
 const REPO = resolve(__dirname, '..', '..', '..');
@@ -246,8 +250,20 @@ test('derivePhaseStatus: the full mapping table', () => {
   assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, verification: 'passed' }), 'complete');
   assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, verification: 'human_needed' }), 'verifying');
   assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, verification: 'gaps_found' }), 'verifying');
-  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false }), 'verifying');
   assert.equal(derivePhaseStatus({ plans: 3, summaries: 4, hasContext: false, verification: 'passed' }), 'complete');
+  // Executed, no VERIFICATION yet: the code-review gate is where the phase sits.
+  // A REVIEW.md means that gate is already behind it, whatever its own status.
+  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false }), 'reviewing');
+  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, hasReview: true }), 'verifying');
+  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, hasReview: false }), 'reviewing');
+  // A VERIFICATION outranks the review gate in both directions.
+  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, hasReview: true, verification: 'passed' }), 'complete');
+  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, hasReview: false, verification: 'gaps_found' }), 'verifying');
+  // A VERIFICATION file that exists but cannot be read is still verification
+  // reached — `verification` (the frontmatter status) being absent is not the
+  // same fact as the file being absent.
+  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, hasVerification: true }), 'verifying');
+  assert.equal(derivePhaseStatus({ plans: 3, summaries: 3, hasContext: false, hasVerification: false, hasReview: false }), 'reviewing');
 });
 
 test('mapUatStatus', () => {
@@ -288,8 +304,14 @@ test('fixture executing/ agrees with GSD', async () => {
   // GSD "Complete"/"In Progress" ↔ our complete/executing
   assert.deepEqual(gsdPhases.map((p) => p['status']), ['Complete', 'In Progress']);
 
-  assert.equal(snap.position?.plan?.index, 2);
+  // STATE.md's `Plan: 2 of 18` is stale: the phase holds 17 summaries and
+  // `stopped_at` reads `Completed 02-14-PLAN.md`. GSD's own state-snapshot
+  // declines to publish the counter at all here (`"current_plan": null`), so
+  // deriving the index from the summaries is the closer reading of the project,
+  // not a divergence from GSD.
+  assert.equal(snap.position?.plan?.index, 18);
   assert.equal(snap.position?.plan?.total, 18);
+  assert.equal((await expected('executing', 'state-snapshot'))['current_plan'], null);
   assert.deepEqual(snap.config, { parallelization: true, modelProfile: 'adaptive', commitDocs: true, mode: 'yolo', autoAdvance: false, branchingStrategy: 'none', phaseBranchTemplate: 'gsd/phase-{phase}-{slug}' });
   assert.equal(deriveGsdStatus(snap), 'executing');
   // GSD recommends the progress router; we promote its concrete alternative
@@ -329,8 +351,9 @@ test('fixture planning-midmilestone/ agrees with GSD', async () => {
   assert.equal(deriveGsdStatus(snap), 'planning');
   assert.deepEqual(snap.blockers, ss['blockers'], 'GSD-faithful: []');
   assert.equal(snap.concerns?.length, 8);
-  // its state.json predates STATE.md's mtime on any fresh checkout → ignored
-  assert.ok(snap.diagnostics?.some((d) => d.startsWith('state.json ignored as stale')));
+  // its state.json predates STATE.md's mtime on any fresh checkout, so its
+  // milestone/next are ignored — the phase statuses it publishes still apply
+  assert.ok(snap.diagnostics?.some((d) => d.startsWith('state.json ignored as stale for milestone/next')));
 });
 
 test('fixture milestone-rollover/ agrees with GSD', async () => {
@@ -431,15 +454,20 @@ test('synthetic state-json-fresh/: GSD\'s published contract overlays milestone,
   assert.equal(snap.gsdVersion, 'core', 'last-resort: state.json flavor');
 });
 
-test('synthetic state-json-stale/: ignored with a diagnostic', async () => {
+test('synthetic state-json-stale/: phase statuses still apply, milestone and next do not', async () => {
   const snap = await readProjectSnapshot(join(SYN, 'state-json-stale'), ISOLATED);
-  assert.equal(snap.project?.milestone, 'v1.0');
+  // `state.json` is a best-effort publisher written only at step boundaries
+  // (`state-contract.cjs`), while STATE.md is rewritten on every plan advance —
+  // so it is *normally* older than STATE.md and gating its phase list on that
+  // threw GSD's own record away on nearly every snapshot. Phase statuses are
+  // now always trusted; the two genuinely time-sensitive fields are not.
   assert.deepEqual(
     snap.phases.map((p) => p.status),
-    ['planned', 'planned'],
+    ['executing', 'complete'],
   );
-  assert.equal(snap.next?.source, 'rules');
-  assert.ok(snap.diagnostics?.[0]?.startsWith('state.json ignored as stale'));
+  assert.equal(snap.project?.milestone, 'v1.0', 'milestone identity stays with STATE.md/ROADMAP');
+  assert.equal(snap.next?.source, 'rules', 'a stale `next` is still refused');
+  assert.ok(snap.diagnostics?.[0]?.startsWith('state.json ignored as stale for milestone/next'));
 });
 
 test('synthetic decimal-phase/: decimal numbers stay strings, sentinels excluded', async () => {
@@ -1013,7 +1041,7 @@ test('state.json with no updated_at, bad phases and no next', async () => {
   assert.equal(snap.next?.source, 'rules');
 });
 
-test('fresh state.json: in_progress does not clobber a filesystem verifying', async () => {
+test('fresh state.json: in_progress does not clobber a filesystem review/verify', async () => {
   const mem = new MemFs(
     {
       [`${P}/PROJECT.md`]: '# P\n',
@@ -1025,7 +1053,9 @@ test('fresh state.json: in_progress does not clobber a filesystem verifying', as
     { mtimes: { [`${P}/STATE.md`]: 1000 } },
   );
   const snap = await readProjectSnapshot(ROOT, { ...ISOLATED, fs: mem });
-  assert.equal(snap.phases[0]?.status, 'verifying');
+  // every plan has a summary and there is no REVIEW or VERIFICATION yet, so the
+  // phase sits at the code-review gate — `in_progress` must not drag it back
+  assert.equal(snap.phases[0]?.status, 'reviewing');
 });
 
 test('gsdVersion from <root>/.claude/gsd-core/VERSION then the config roots', async () => {
@@ -1212,4 +1242,131 @@ test('parseGsdConfig: the keys orchestration acts on, unknown values dropped, em
     },
   );
   assert.deepEqual(parseGsdConfig({ git: { phase_branch_template: '   ' } }), undefined);
+});
+
+/* ================================================================== *
+ * review + verification: the two steps STATE.md never records
+ * ================================================================== */
+
+test('isReviewFile / isUiReviewFile: the UI pass is not the code-review gate', () => {
+  // `53-UI-REVIEW.md` also ends `-REVIEW.md`; order matters at every call site
+  assert.equal(isUiReviewFile('53-UI-REVIEW.md'), true);
+  assert.equal(isReviewFile('53-UI-REVIEW.md'), false);
+  assert.equal(isReviewFile('53-REVIEW.md'), true);
+  assert.equal(isReviewFile('REVIEW.md'), true);
+  assert.equal(isReviewFile('53-VERIFICATION.md'), false);
+  assert.equal(isUiReviewFile('UI-REVIEW.md'), true);
+});
+
+const REVIEWED = `${P}/phases/01-a`;
+const executedPhase = (extra: Record<string, string> = {}): Record<string, string> => ({
+  [`${P}/PROJECT.md`]: '# P\n',
+  [`${P}/STATE.md`]: '---\ncurrent_phase: 1\nstatus: executing\n---\n\n## Current Position\n\nPhase: 1 — a\nPlan: 1 of 2\nStatus: Ready to execute\n',
+  [`${REVIEWED}/01-01-PLAN.md`]: 'x',
+  [`${REVIEWED}/01-01-SUMMARY.md`]: 'x',
+  [`${REVIEWED}/01-02-PLAN.md`]: 'x',
+  [`${REVIEWED}/01-02-SUMMARY.md`]: 'x',
+  ...extra,
+});
+
+test('the review/verify ladder: artifact presence means that step finished', async () => {
+  const read = async (extra: Record<string, string> = {}) => readProjectSnapshot(ROOT, { ...ISOLATED, fs: new MemFs(executedPhase(extra)) });
+
+  // executed, nothing else: sitting at the code-review gate
+  let snap = await read();
+  assert.equal(snap.phases[0]?.status, 'reviewing');
+  assert.equal(snap.position?.step, 'review', 'STATE.md still says executing; the artifacts are ahead of it');
+
+  // a REVIEW means the gate is behind it, whatever the review concluded
+  for (const s of ['clean', 'issues_found', 'skipped']) {
+    snap = await read({ [`${REVIEWED}/01-REVIEW.md`]: `---\nstatus: ${s}\nfindings:\n  critical: 0\n  warning: 1\n  info: 0\n---\n` });
+    assert.equal(snap.phases[0]?.status, 'verifying', s);
+    assert.equal(snap.position?.step, 'verify', s);
+    assert.equal(snap.phases[0]?.review?.status, s);
+    assert.equal(snap.phases[0]?.review?.warning, 1);
+  }
+
+  // a UI review is a different pass and must not satisfy the code-review gate
+  snap = await read({ [`${REVIEWED}/01-UI-REVIEW.md`]: '# UI Review\n' });
+  assert.equal(snap.phases[0]?.status, 'reviewing');
+  assert.equal(snap.phases[0]?.uiReview, true);
+  assert.equal(snap.phases[0]?.review, undefined);
+
+  // VERIFICATION outranks the gate in both directions
+  snap = await read({ [`${REVIEWED}/01-VERIFICATION.md`]: '---\nstatus: gaps_found\n---\n' });
+  assert.equal(snap.phases[0]?.status, 'verifying');
+  snap = await read({ [`${REVIEWED}/01-VERIFICATION.md`]: '---\nstatus: passed\n---\n' });
+  assert.equal(snap.phases[0]?.status, 'complete');
+});
+
+test('REVIEW frontmatter: top-level only, nested look-alikes ignored', async () => {
+  // shaped after GPS.CommercialCRM's real 40-VERIFICATION.md, which carries a
+  // nested `re_verification.previous_status: gaps_found` under `status: passed`
+  const mem = new MemFs(
+    executedPhase({
+      [`${REVIEWED}/01-VERIFICATION.md`]: '---\nphase: 01-a\nstatus: passed\nre_verification:\n  previous_status: gaps_found\n  previous_score: 5/6\ngaps:\n  - truth: "x"\n    status: failed\n---\n',
+      [`${REVIEWED}/01-REVIEW.md`]: '---\nphase: 01-a\ndepth: standard\nfindings:\n  critical: 2\n  warning: 4\n  info: 1\n  total: 7\nstatus: issues_found\n---\n',
+    }),
+  );
+  const snap = await readProjectSnapshot(ROOT, { ...ISOLATED, fs: mem });
+  assert.equal(snap.phases[0]?.status, 'complete', 'top-level `passed` wins over the nested gaps_found');
+  assert.deepEqual(snap.phases[0]?.review, { status: 'issues_found', critical: 2, warning: 4, info: 1 });
+});
+
+test('advancedStep: one-directional, capped at verify', () => {
+  assert.equal(advancedStep('execute', 'review'), 'review', 'STATE.md is behind its own artifacts');
+  assert.equal(advancedStep('execute', 'verify'), 'verify');
+  assert.equal(advancedStep('plan', 'review'), 'review');
+  assert.equal(advancedStep(undefined, 'review'), 'review');
+  assert.equal(advancedStep('verify', 'review'), 'verify', 'never walks a step backwards');
+  assert.equal(advancedStep('ship', 'verify'), 'ship');
+  assert.equal(advancedStep('execute', 'ship'), 'execute', 'milestone completion is not a phase dir\'s call');
+  assert.equal(advancedStep('plan', undefined), 'plan');
+  assert.equal(advancedStep(undefined, undefined), undefined);
+});
+
+test('reconcilePlanPosition: summaries win when STATE.md\'s counter is behind', () => {
+  const phase = (summaries: number, status: PhaseInfo['status']) => ({ plans: 10, summaries, status });
+  // GPS.CommercialCRM phase 40: `Plan: 4 of 10` while 10 summaries were on disk
+  assert.deepEqual(reconcilePlanPosition({ id: '40-04', index: 4, total: 10 }, phase(10, 'complete'), '40'), { id: '40-10', index: 10, total: 10 });
+  // mid-execution: 3 summaries done means plan 4 is the one in flight
+  assert.deepEqual(reconcilePlanPosition({ id: '40-01', index: 1, total: 10 }, phase(3, 'executing'), '40'), { id: '40-04', index: 4, total: 10 });
+  // STATE.md ahead of the summaries is trusted as-is
+  assert.deepEqual(reconcilePlanPosition({ id: '40-08', index: 8, total: 10 }, phase(3, 'executing'), '40'), { id: '40-08', index: 8, total: 10 });
+  // no phase, or a phase with no plans, leaves the declared value alone
+  assert.deepEqual(reconcilePlanPosition({ id: '40-04', index: 4, total: 10 }, undefined, '40'), { id: '40-04', index: 4, total: 10 });
+  assert.equal(reconcilePlanPosition(undefined, undefined, '40'), undefined);
+  // nothing declared at all, but the phase is past execution
+  assert.deepEqual(reconcilePlanPosition(undefined, phase(10, 'verifying'), '40'), { id: '40-10', index: 10, total: 10 });
+});
+
+test('a HANDOFF.json for an older phase never pauses the project', async () => {
+  // GPS.CommercialCRM shipped `gsd_status = paused` for six days off exactly this
+  const base = {
+    [`${P}/PROJECT.md`]: '# P\n',
+    [`${P}/STATE.md`]: '---\ncurrent_phase: 41\nstatus: planning\nlast_updated: "2026-09-17T19:57:12.742Z"\n---\n\n## Current Position\n\nPhase: 41 — Recurring Line Class\nPlan: Not started\nStatus: Ready to plan\n',
+  };
+  const stale = await readProjectSnapshot(ROOT, {
+    ...ISOLATED,
+    fs: new MemFs({ ...base, [`${P}/HANDOFF.json`]: JSON.stringify({ phase: '34', status: 'paused', timestamp: '2026-09-11T18:59:57.689Z' }) }),
+  });
+  assert.equal(stale.paused, undefined);
+  assert.equal(deriveGsdStatus(stale), 'planning');
+  assert.ok(stale.diagnostics?.some((d) => d.includes('records phase 34')));
+
+  // a handoff for the phase we are actually on, and newer than STATE.md, pauses
+  const live = await readProjectSnapshot(ROOT, {
+    ...ISOLATED,
+    fs: new MemFs({ ...base, [`${P}/HANDOFF.json`]: JSON.stringify({ phase: '41', status: 'paused', timestamp: '2026-09-17T20:10:00.000Z' }) }),
+  });
+  assert.equal(live.paused?.file, 'HANDOFF.json');
+  assert.equal(deriveGsdStatus(live), 'paused');
+
+  // same phase, but predating STATE.md's own last_updated → already resumed
+  const resumed = await readProjectSnapshot(ROOT, {
+    ...ISOLATED,
+    fs: new MemFs({ ...base, [`${P}/HANDOFF.json`]: JSON.stringify({ phase: '41', status: 'paused', timestamp: '2026-09-17T10:00:00.000Z' }) }),
+  });
+  assert.equal(resumed.paused, undefined);
+  assert.ok(resumed.diagnostics?.some((d) => d.includes('ignored as stale')));
 });

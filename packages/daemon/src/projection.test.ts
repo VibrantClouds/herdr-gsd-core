@@ -104,3 +104,54 @@ test('shortSlug and title without phase', () => {
   assert.equal(shortSlug('a'.repeat(40), 24).length, 24);
   assert.equal(paneTitle(snap()), 'GSD · project');
 });
+
+test('shortSlug: directory slugs de-slug, human phase names keep their hyphens', () => {
+  // `current_phase_name` is prose and may carry a meaningful hyphen —
+  // InternalDeveloperPlatform's phase 54 is "Production-Only Onboarding"
+  assert.equal(shortSlug('Production-Only Onboarding'), 'Production-Only Onboarding');
+  assert.equal(shortSlug('Engine Wired Into Live Line CRUD — Lever, Pin and Snapshot (Backend)'), 'Engine Wired Into Live Line CRUD — Lever, Pin and Snapshot …');
+  // a real directory slug still collapses
+  assert.equal(shortSlug('40-engine-wired-into-live'), '40 engine wired into live');
+  assert.equal(shortSlug('execution_worktree_runner'), 'execution worktree runner');
+  assert.equal(shortSlug(''), '');
+});
+
+test('reviewing renders as its own status and step', () => {
+  const s = snap({
+    phases: [ph('03', 'reviewing', 4, 4)],
+    position: { phase: { number: '03', slug: 'auth', status: 'reviewing' }, plan: { id: '03-04', index: 4, total: 4 }, step: 'review' },
+  });
+  assert.equal(statusFromSnapshot(s), 'reviewing');
+  assert.equal(workspaceTokens(s, undefined).gsd_step, 'review 4/4');
+  assert.equal(workspaceTokens(s, undefined).gsd_status, 'reviewing');
+});
+
+test('a review with critical findings wants a human', () => {
+  const withReview = (critical: number): ProjectSnapshot =>
+    snap({
+      phases: [{ ...ph('03', 'reviewing', 4, 4), review: { status: 'issues_found', critical, warning: 2, info: 0 } }],
+      position: { phase: { number: '03', slug: 'auth', status: 'reviewing' }, step: 'review' },
+    });
+  assert.equal(statusFromSnapshot(withReview(0)), 'reviewing');
+  assert.equal(statusFromSnapshot(withReview(1)), 'blocked');
+});
+
+test('all phase dirs complete is not milestone complete while STATE.md has moved on', () => {
+  // GPS.CommercialCRM: phases 37-40 all complete on disk, STATE.md on phase 41,
+  // whose directory GSD has not created yet
+  const movedOn = snap({
+    phases: [ph('39', 'complete', 5, 5), ph('40', 'complete', 10, 10)],
+    position: { phase: { number: '41', slug: 'Recurring Line Class', status: 'not_started' }, step: 'plan' },
+  });
+  assert.equal(statusFromSnapshot(movedOn), 'planning');
+
+  // the same project once STATE.md agrees the phase is done
+  const done = snap({
+    phases: [ph('39', 'complete', 5, 5), ph('40', 'complete', 10, 10)],
+    position: { phase: { number: '40', slug: 'engine', status: 'complete' }, step: 'ship' },
+  });
+  assert.equal(statusFromSnapshot(done), 'complete');
+
+  // a shipped milestone declares no current phase at all
+  assert.equal(statusFromSnapshot(snap({ phases: [ph('08', 'complete', 3, 3)] })), 'complete');
+});
